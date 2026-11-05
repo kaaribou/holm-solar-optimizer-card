@@ -18,11 +18,20 @@ Solar Optimizer reste le moteur : la carte s'appuie uniquement sur ses entités,
 - 📈 **Historique sur une journée** (jours précédents compris) **ou sur 7 jours** : courbes production / consommation / surplus, bandes des heures creuses, frise des périodes de marche de chaque appareil (au solaire ou en heures creuses).
 - 💶 **Autoconsommation et économies** : part consommée sur place et part revendue, en kWh et en %, couverture solaire, et économies en € calculées heure par heure avec le prix réel.
 - ⚙️ **Réglages des appareils** (administrateurs) : modifier tous les paramètres d'un appareil ou en **ajouter** un nouveau, avec les formulaires de Solar Optimizer lui-même. La carte signale aussi une condition d'utilisation entourée de guillemets en trop, et propose de la corriger.
+- 🗂️ **Compacte** : le direct seul au départ, puis deux onglets à ouvrir d'un clic, comme sur les autres cartes HOLM : **Appareils** (avec le nombre d'appareils en marche) et **Historique**.
 - 🌍 **8 langues**, thème clair et sombre, affichage mobile, éditeur visuel.
 
-| Le direct et les appareils | L'historique de la journée |
+| Onglet Appareils | Onglet Historique |
 |---|---|
 | ![Carte HOLM Solar Optimizer](docs/images/carte.png) | ![Historique](docs/images/historique.png) |
+
+### 🆕 Nouveautés de la 1.2.0
+
+- 📦 **Carte compacte au départ** : seul le direct s'affiche ; les onglets **Appareils** et **Historique** s'ouvrent d'un clic et se referment de la même façon. Option `default_tab` pour ouvrir un onglet d'office.
+- 🏷️ **Barres légendées** : « Production : 62 % consommée sur place · 38 % revendue » et « Maison : 15 % solaire · 85 % réseau ».
+- 🗂️ **Onglets** : les appareils pilotés et l'historique passent dans deux onglets, sous le direct toujours visible.
+- 🧮 **Bilans identiques au tableau Énergie** : production, achat réseau, revente et autoconsommation sont lus sur les mêmes compteurs que le tableau Énergie de Home Assistant (avant : estimés à partir des puissances moyennes).
+- 🔌 **Nouvelle tuile Achat réseau**, avec son coût calculé aux prix déclarés dans le tableau Énergie ; la tuile Revendu affiche le gain de la revente.
 
 ### Avec HOLM HP/HC
 
@@ -63,6 +72,7 @@ history_mode: day      # day (journée) ou week (7 jours)
 | `show_live` | Afficher le direct | `true` |
 | `show_devices` | Afficher les appareils pilotés | `true` |
 | `show_history` | Afficher l'historique | `true` |
+| `default_tab` | Onglet ouvert au départ : `none` (carte repliée), `devices` ou `history` | `none` |
 | `history_mode` | Historique affiché à l'ouverture : `day` ou `week` | `day` |
 | `exclude` | Appareils à masquer (`switch.solar_optimizer_…`) | — |
 | `production_entity` | Capteur de production solaire (W) | celui de Solar Optimizer |
@@ -73,14 +83,17 @@ L'éditeur visuel est disponible.
 
 ## Comment ça marche
 
-- **Le direct** lit les capteurs déclarés dans Solar Optimizer (production et consommation nette). Le surplus est la puissance revendue sur le réseau ; la consommation de la maison est l'achat réseau plus la production consommée sur place.
+- **Le direct** : la grande tuile montre l'achat réseau, ou le surplus revendu quand les panneaux produisent plus que la maison ne consomme. Production, Maison (achat réseau + solaire consommé sur place) et Pilotés (puissance des appareils allumés par Solar Optimizer) complètent. Les deux barres répartissent la production (consommée sur place / revendue) et la consommation de la maison (solaire / réseau). Le direct lit les capteurs déclarés dans Solar Optimizer (production et consommation nette). Le surplus est la puissance revendue sur le réseau ; la consommation de la maison est l'achat réseau plus la production consommée sur place.
 - **Forcer un appareil** appelle `solar_optimizer.start_device` (avec ou sans durée) ; **Arrêter** appelle `solar_optimizer.stop_device`. Pendant un forçage, Solar Optimizer désactive le pilotage automatique et le rétablit à la fin.
-- **L'historique** vient des statistiques de Home Assistant (moyennes sur 5 minutes, conservées 10 jours par défaut) et de l'historique des appareils. Les économies additionnent l'énergie consommée sur place, au prix d'achat de l'instant, et l'énergie revendue, au prix de rachat net de taxe.
+- **Les bilans** (production, achat, revente, autoconsommation) viennent des compteurs d'énergie déclarés dans le **tableau Énergie** de Home Assistant, par tranches de 5 minutes : ce sont les mêmes chiffres, à jour jusqu'aux 5 dernières minutes (les cartes basées sur les statistiques horaires s'arrêtent à la dernière heure terminée). Le coût de l'achat utilise les prix du tableau Énergie ; les économies additionnent l'énergie consommée sur place, au prix d'achat de l'instant, et la revente. Sans tableau Énergie, la carte se rabat sur les puissances moyennes ; la source est indiquée sous les tuiles.
+- **Les courbes** viennent des statistiques de puissance sur 5 minutes (conservées 10 jours par défaut) et la frise de l'historique des appareils.
 - **Les réglages** ouvrent les formulaires d'options et d'ajout de Solar Optimizer, comme dans Paramètres → Appareils et services : la carte n'écrit rien d'autre. La suppression d'un appareil reste dans Home Assistant.
 
 ## FAQ
 
 **Je ne vois pas le bouton Réglages.** Il est réservé aux administrateurs de Home Assistant, comme les formulaires de configuration.
+
+**L'achat réseau est un peu plus élevé que sur une autre carte.** Les cartes qui lisent les statistiques horaires ne comptent pas l'heure en cours ; la HOLM Solar Optimizer Card l'inclut.
 
 **Le temps de marche du jour diffère de la frise.** Solar Optimizer remet ses compteurs à zéro à l'heure de remise à zéro (5 h par défaut), alors que la frise compte de minuit à minuit.
 

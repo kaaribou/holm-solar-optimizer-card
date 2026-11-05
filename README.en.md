@@ -18,11 +18,20 @@ Solar Optimizer stays the engine: the card only uses its entities, its actions a
 - 📈 **History for one day** (previous days included) **or 7 days**: production / consumption / surplus curves, off-peak bands, a timeline of each device's runs (solar or off-peak).
 - 💶 **Self-consumption and savings**: share used on site and share sold, in kWh and %, solar coverage, and savings in € computed with the real price at each moment.
 - ⚙️ **Device settings** (administrators): edit every setting of a device or **add** a new one, using Solar Optimizer's own forms. The card also flags a usability condition wrapped in extra quotes and offers to fix it.
+- 🗂️ **Compact**: only the live section at first, then two tabs opened with a click, like the other HOLM cards: **Devices** (with the number of running devices) and **History**.
 - 🌍 **8 languages**, light and dark themes, mobile layout, visual editor.
 
-| Live and devices | Today's history |
+| Devices tab | History tab |
 |---|---|
 | ![HOLM Solar Optimizer card](docs/images/carte.png) | ![History](docs/images/historique.png) |
+
+### 🆕 What's new in 1.2.0
+
+- 📦 **Compact by default**: only the live section shows; the **Devices** and **History** tabs open with a click and close the same way. `default_tab` option to open a tab from the start.
+- 🏷️ **Labelled bars**: “Production: 62 % used on site · 38 % sold” and “Home: 15 % solar · 85 % grid”.
+- 🗂️ **Tabs**: managed devices and history move into two tabs, under the always-visible live section.
+- 🧮 **Totals that match the Energy dashboard**: production, grid import, export and self-consumption are read from the same meters as Home Assistant's Energy dashboard (previously estimated from average power).
+- 🔌 **New Grid import tile**, with its cost at the prices set in the Energy dashboard; the Sold tile shows the export income.
 
 ### With HOLM HP/HC
 
@@ -63,6 +72,7 @@ history_mode: day      # day or week (7 days)
 | `show_live` | Show the live section | `true` |
 | `show_devices` | Show the managed devices | `true` |
 | `show_history` | Show the history | `true` |
+| `default_tab` | Tab open at start: `none` (collapsed card), `devices` or `history` | `none` |
 | `history_mode` | History shown first: `day` or `week` | `day` |
 | `exclude` | Devices to hide (`switch.solar_optimizer_…`) | — |
 | `production_entity` | Solar production sensor (W) | Solar Optimizer's |
@@ -73,14 +83,17 @@ The visual editor is available.
 
 ## How it works
 
-- **Live** reads the sensors set in Solar Optimizer (production and net consumption). The surplus is the power exported to the grid; home consumption is grid import plus production used on site.
+- **Live**: the large tile shows grid import, or the surplus sold when the panels produce more than the home uses. Production, Home (grid import + solar used on site) and Managed (power of the devices switched on by Solar Optimizer) complete it. The two bars split production (used on site / sold) and home consumption (solar / grid). Live reads the sensors set in Solar Optimizer (production and net consumption). The surplus is the power exported to the grid; home consumption is grid import plus production used on site.
 - **Force** calls `solar_optimizer.start_device` (with or without a duration); **Stop** calls `solar_optimizer.stop_device`. While a device is forced, Solar Optimizer disables automatic control and restores it at the end.
-- **History** comes from Home Assistant's statistics (5-minute means, kept 10 days by default) and the devices' history. Savings add up the energy used on site, at the buy price of that moment, and the energy sold, at the feed-in price net of tax.
+- **Totals** (production, import, export, self-consumption) come from the energy meters set in Home Assistant's **Energy dashboard**, in 5-minute steps: the same figures, up to date to the last 5 minutes (cards based on hourly statistics stop at the last full hour). Import cost uses the Energy dashboard prices; savings add up the energy used on site, at the buy price of that moment, and the export income. Without an Energy dashboard, the card falls back to average power; the source is shown under the tiles.
+- **Curves** come from 5-minute power statistics (kept 10 days by default) and the timeline from the devices' history.
 - **Settings** open Solar Optimizer's own options and add-device forms, as in Settings → Devices & services: the card writes nothing else. Deleting a device stays in Home Assistant.
 
 ## FAQ
 
 **I can't see the Settings button.** It is reserved for Home Assistant administrators, like the configuration forms.
+
+**Grid import is slightly higher than on another card.** Cards that read hourly statistics leave out the current hour; the HOLM Solar Optimizer Card includes it.
 
 **Today's run time differs from the timeline.** Solar Optimizer resets its counters at the daily reset time (5 am by default), while the timeline counts from midnight to midnight.
 
