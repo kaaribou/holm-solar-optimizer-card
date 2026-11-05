@@ -1,22 +1,27 @@
-/* holm-solar-optimizer-card — https://github.com/kaaribou/holm-solar-optimizer-card — licence MIT — v1.2.0 */
+/* holm-solar-optimizer-card — https://github.com/kaaribou/holm-solar-optimizer-card — licence MIT — v1.4.0 */
 // HOLM Solar Optimizer Card — une interface moderne pour Solar Optimizer (jmcollin78/solar_optimizer), qui reste le moteur.
 // Config (éditeur visuel disponible) :
 //   type: custom:holm-solar-optimizer-card
 //   title: Solar Optimizer
 //   default_tab: none            # none (carte repliée) | devices | history (onglet ouvert au départ)
 //   history_mode: day            # day | week (vue de l'historique à l'ouverture)
+//   history_chart: devices       # devices | energy (graphique de l'historique à l'ouverture)
+//   power_sensors:               # facultatif : capteur de puissance réel d'un appareil piloté
+//     switch.solar_optimizer_deshumidificateur: sensor.prise_deshumidificateur_power
 //   show_live / show_devices / show_history: true
 //   production_entity: sensor.xxx   # facultatif : sinon celui de Solar Optimizer
 //   grid_entity: sensor.xxx         # facultatif : consommation nette (négative à la revente)
 //   price_entity: sensor.tarif_actuel  # facultatif : prix d'achat (HOLM HP/HC détecté automatiquement)
 //   exclude: [switch.solar_optimizer_xxx]
 (() => {
-  const VERSION = "1.2.0";
+  const VERSION = "1.4.0";
   const DOMAIN = "solar_optimizer";
 
   // ───────────────────────── traductions ─────────────────────────
   const I18N = {
     fr: {
+      show_all: "Tout afficher", toggle_hint: "Clic : masquer ou afficher · double-clic : voir uniquement celui-ci",
+      ch_devices: "Appareils", ch_energy: "Énergie", solar_share: "{a} % solaire", estimated: "≈ estimé : puissance max × durée de marche", l_history_chart: "Graphique à l'ouverture", dev_cons: "Consommation des appareils",
       tab_none: "Aucun (carte compacte)", bar_prod: "Production : {a} % consommée sur place · {b} % revendue", bar_house: "Maison : {a} % solaire · {b} % réseau", bar_noprod: "Production : aucune pour le moment",
       tab_devices: "Appareils", kpi_import: "Achat réseau", l_default_tab: "Onglet à l'ouverture", imp_cost: "{a} achetés", sell_gain: "{a} de revente", src_energy: "Source : compteurs du tableau Énergie", src_power: "Source : puissances moyennes (pas de tableau Énergie)",
       title: "Solar Optimizer", surplus: "Surplus", import: "Achat réseau", production: "Production", house: "Maison", grid: "Réseau", managed: "Pilotés",
@@ -43,6 +48,8 @@
       card_name: "HOLM – Solar Optimizer", card_desc: "Surplus en direct, appareils pilotés, historique et réglages de Solar Optimizer",
     },
     en: {
+      show_all: "Show all", toggle_hint: "Click: hide or show · double-click: show this one only",
+      ch_devices: "Devices", ch_energy: "Energy", solar_share: "{a} % solar", estimated: "≈ estimated: max power × run time", l_history_chart: "Chart shown first", dev_cons: "Device consumption",
       tab_none: "None (compact card)", bar_prod: "Production: {a} % used on site · {b} % sold", bar_house: "Home: {a} % solar · {b} % grid", bar_noprod: "Production: none right now",
       tab_devices: "Devices", kpi_import: "Grid import", l_default_tab: "Tab shown first", imp_cost: "{a} bought", sell_gain: "{a} of sales", src_energy: "Source: Energy dashboard meters", src_power: "Source: average power (no Energy dashboard)",
       title: "Solar Optimizer", surplus: "Surplus", import: "Grid import", production: "Production", house: "Home", grid: "Grid", managed: "Managed",
@@ -69,6 +76,8 @@
       card_name: "HOLM – Solar Optimizer", card_desc: "Live surplus, managed devices, history and settings for Solar Optimizer",
     },
     de: {
+      show_all: "Alle anzeigen", toggle_hint: "Klick: aus- oder einblenden · Doppelklick: nur dieses anzeigen",
+      ch_devices: "Geräte", ch_energy: "Energie", solar_share: "{a} % Solar", estimated: "≈ geschätzt: max. Leistung × Laufzeit", l_history_chart: "Diagramm beim Öffnen", dev_cons: "Verbrauch der Geräte",
       tab_none: "Keiner (kompakte Karte)", bar_prod: "Erzeugung: {a} % selbst verbraucht · {b} % eingespeist", bar_house: "Haus: {a} % Solar · {b} % Netz", bar_noprod: "Erzeugung: derzeit keine",
       tab_devices: "Geräte", kpi_import: "Netzbezug", l_default_tab: "Reiter beim Öffnen", imp_cost: "{a} bezahlt", sell_gain: "{a} Einspeisung", src_energy: "Quelle: Zähler des Energie-Dashboards", src_power: "Quelle: mittlere Leistung (kein Energie-Dashboard)",
       title: "Solar Optimizer", surplus: "Überschuss", import: "Netzbezug", production: "Erzeugung", house: "Haus", grid: "Netz", managed: "Gesteuert",
@@ -95,6 +104,8 @@
       card_name: "HOLM – Solar Optimizer", card_desc: "Live-Überschuss, gesteuerte Geräte, Verlauf und Einstellungen für Solar Optimizer",
     },
     es: {
+      show_all: "Mostrar todo", toggle_hint: "Clic: ocultar o mostrar · doble clic: ver solo este",
+      ch_devices: "Dispositivos", ch_energy: "Energía", solar_share: "{a} % solar", estimated: "≈ estimado: potencia máx. × tiempo de marcha", l_history_chart: "Gráfico al abrir", dev_cons: "Consumo de los dispositivos",
       tab_none: "Ninguna (tarjeta compacta)", bar_prod: "Producción: {a} % consumida in situ · {b} % vendida", bar_house: "Casa: {a} % solar · {b} % red", bar_noprod: "Producción: ninguna por ahora",
       tab_devices: "Dispositivos", kpi_import: "Compra a la red", l_default_tab: "Pestaña al abrir", imp_cost: "{a} pagados", sell_gain: "{a} de venta", src_energy: "Fuente: contadores del panel de Energía", src_power: "Fuente: potencia media (sin panel de Energía)",
       title: "Solar Optimizer", surplus: "Excedente", import: "Compra a la red", production: "Producción", house: "Casa", grid: "Red", managed: "Gestionados",
@@ -121,6 +132,8 @@
       card_name: "HOLM – Solar Optimizer", card_desc: "Excedente en directo, dispositivos gestionados, historial y ajustes de Solar Optimizer",
     },
     it: {
+      show_all: "Mostra tutto", toggle_hint: "Clic: nascondi o mostra · doppio clic: solo questo",
+      ch_devices: "Dispositivi", ch_energy: "Energia", solar_share: "{a} % solare", estimated: "≈ stimato: potenza max × tempo di funzionamento", l_history_chart: "Grafico all'apertura", dev_cons: "Consumo dei dispositivi",
       tab_none: "Nessuna (scheda compatta)", bar_prod: "Produzione: {a} % consumata in loco · {b} % venduta", bar_house: "Casa: {a} % solare · {b} % rete", bar_noprod: "Produzione: nessuna al momento",
       tab_devices: "Dispositivi", kpi_import: "Prelievo dalla rete", l_default_tab: "Scheda all'apertura", imp_cost: "{a} pagati", sell_gain: "{a} di vendita", src_energy: "Fonte: contatori della dashboard Energia", src_power: "Fonte: potenza media (nessuna dashboard Energia)",
       title: "Solar Optimizer", surplus: "Surplus", import: "Prelievo dalla rete", production: "Produzione", house: "Casa", grid: "Rete", managed: "Gestiti",
@@ -147,6 +160,8 @@
       card_name: "HOLM – Solar Optimizer", card_desc: "Surplus in diretta, dispositivi gestiti, cronologia e impostazioni di Solar Optimizer",
     },
     nl: {
+      show_all: "Alles tonen", toggle_hint: "Klik: verbergen of tonen · dubbelklik: alleen deze tonen",
+      ch_devices: "Apparaten", ch_energy: "Energie", solar_share: "{a} % zon", estimated: "≈ geschat: max. vermogen × looptijd", l_history_chart: "Grafiek bij openen", dev_cons: "Verbruik van de apparaten",
       tab_none: "Geen (compacte kaart)", bar_prod: "Productie: {a} % zelf verbruikt · {b} % teruggeleverd", bar_house: "Huis: {a} % zon · {b} % net", bar_noprod: "Productie: momenteel geen",
       tab_devices: "Apparaten", kpi_import: "Afname van het net", l_default_tab: "Tabblad bij openen", imp_cost: "{a} betaald", sell_gain: "{a} teruglevering", src_energy: "Bron: meters van het Energie-dashboard", src_power: "Bron: gemiddeld vermogen (geen Energie-dashboard)",
       title: "Solar Optimizer", surplus: "Overschot", import: "Afname van het net", production: "Productie", house: "Huis", grid: "Net", managed: "Gestuurd",
@@ -173,6 +188,8 @@
       card_name: "HOLM – Solar Optimizer", card_desc: "Live overschot, gestuurde apparaten, geschiedenis en instellingen van Solar Optimizer",
     },
     pt: {
+      show_all: "Mostrar tudo", toggle_hint: "Clique: ocultar ou mostrar · duplo clique: ver só este",
+      ch_devices: "Dispositivos", ch_energy: "Energia", solar_share: "{a} % solar", estimated: "≈ estimado: potência máx. × tempo de funcionamento", l_history_chart: "Gráfico ao abrir", dev_cons: "Consumo dos dispositivos",
       tab_none: "Nenhum (cartão compacto)", bar_prod: "Produção: {a} % consumida no local · {b} % vendida", bar_house: "Casa: {a} % solar · {b} % rede", bar_noprod: "Produção: nenhuma de momento",
       tab_devices: "Dispositivos", kpi_import: "Compra à rede", l_default_tab: "Separador ao abrir", imp_cost: "{a} pagos", sell_gain: "{a} de venda", src_energy: "Fonte: contadores do painel de Energia", src_power: "Fonte: potência média (sem painel de Energia)",
       title: "Solar Optimizer", surplus: "Excedente", import: "Compra à rede", production: "Produção", house: "Casa", grid: "Rede", managed: "Geridos",
@@ -199,6 +216,8 @@
       card_name: "HOLM – Solar Optimizer", card_desc: "Excedente em direto, dispositivos geridos, histórico e definições do Solar Optimizer",
     },
     pl: {
+      show_all: "Pokaż wszystko", toggle_hint: "Kliknięcie: ukryj lub pokaż · dwuklik: pokaż tylko ten",
+      ch_devices: "Urządzenia", ch_energy: "Energia", solar_share: "{a} % ze słońca", estimated: "≈ szacunek: moc maks. × czas pracy", l_history_chart: "Wykres po otwarciu", dev_cons: "Zużycie urządzeń",
       tab_none: "Brak (kompaktowa karta)", bar_prod: "Produkcja: {a} % zużyta na miejscu · {b} % sprzedana", bar_house: "Dom: {a} % słońce · {b} % sieć", bar_noprod: "Produkcja: obecnie brak",
       tab_devices: "Urządzenia", kpi_import: "Pobór z sieci", l_default_tab: "Karta po otwarciu", imp_cost: "{a} zapłacone", sell_gain: "{a} ze sprzedaży", src_energy: "Źródło: liczniki panelu Energia", src_power: "Źródło: średnia moc (brak panelu Energia)",
       title: "Solar Optimizer", surplus: "Nadwyżka", import: "Pobór z sieci", production: "Produkcja", house: "Dom", grid: "Sieć", managed: "Sterowane",
@@ -252,6 +271,8 @@
       this._c = { show_live: true, show_devices: true, show_history: true, history_mode: "day", ...c };
       this._mode = this._c.history_mode === "week" ? "week" : "day";
       this._tab = ["devices", "history"].includes(this._c.default_tab) ? this._c.default_tab : null;
+      this._chart = this._c.history_chart === "energy" ? "energy" : "devices";
+      try { this._off = new Set(JSON.parse(localStorage.getItem("holm-so-hidden") || "[]")); } catch (_) { this._off = new Set(); }
       this._dayOffset = 0;
       this._hist = null;
       this._histKey = "";
@@ -385,6 +406,20 @@
       return { step: f.step_id, o };
     }
 
+    // capteur de puissance réel de l'appareil piloté : option power_sensors, sinon même appareil que l'entité pilotée
+    _powerSensor(d) {
+      const ov = this._c.power_sensors?.[d.id] || this._c.power_sensors?.[d.key];
+      if (ov) return ov;
+      const ents = this._hass.entities || {};
+      const dev = d.opts?.entity_id && ents[d.opts.entity_id]?.device_id;
+      if (!dev) return null;
+      for (const e of Object.values(ents)) {
+        if (e.device_id !== dev || !e.entity_id.startsWith("sensor.")) continue;
+        const a = this._hass.states[e.entity_id]?.attributes;
+        if (a?.device_class === "power") return e.entity_id;
+      }
+      return null;
+    }
     _signature() {
       const s = this._sources();
       const ids = [s.production, s.grid, s.price, s.total, s.weight];
@@ -408,6 +443,16 @@
         </ha-card>`;
       this.shadowRoot.addEventListener("click", (e) => this._onClick(e));
       this.shadowRoot.addEventListener("change", (e) => this._onChange(e));
+      this.shadowRoot.addEventListener("dblclick", (e) => {
+        const b = e.target.closest('[data-act="devtoggle"]'); if (!b || !this._hist) return;
+        // double-clic : n'afficher que celui-ci (la production reste comme elle est)
+        const keep = b.dataset.id;
+        const ids = this._hist.runs.map((r) => r.d.id);
+        if (keep === "__prod") return;
+        const solo = ids.every((id) => id === keep || this._off.has(id)) && !this._off.has(keep);
+        for (const id of ids) { if (solo || id === keep) this._off.delete(id); else this._off.add(id); }
+        this._saveOff(); this._renderHistory();
+      });
       if (this._hass) { this._sig = ""; this._renderLive(); this._renderDevices(); this._renderHistory(); this._renderEditor(); }
       this._renderTabs();
     }
@@ -599,6 +644,14 @@
         } else if (act === "tab") {
           this._tab = this._tab === b.dataset.t ? null : b.dataset.t; this._renderTabs();
           if (this._tab === "history") { if (Date.now() - (this._histAt || 0) > 5 * 60000) this._loadHistory(); else this._renderHistory(); }
+        } else if (act === "devtoggle") {
+          clearTimeout(this._dt);
+          // laisse le temps au double-clic d'arriver
+          if (e.detail > 1) return;
+          const id = b.dataset.id;
+          this._dt = setTimeout(() => { this._off.has(id) ? this._off.delete(id) : this._off.add(id); this._saveOff(); this._renderHistory(); }, 230);
+        } else if (act === "showall") { this._off.clear(); this._saveOff(); this._renderHistory();
+        } else if (act === "chart") { this._chart = b.dataset.c; this._renderHistory();
         } else if (act === "mode") { this._mode = b.dataset.m; this._dayOffset = 0; this._histAt = 0; this._loadHistory();
         } else if (act === "dprev") { this._dayOffset = Math.max(-9, this._dayOffset - 1); this._histAt = 0; this._loadHistory();
         } else if (act === "dnext") { this._dayOffset = Math.min(0, this._dayOffset + 1); this._histAt = 0; this._loadHistory(); }
@@ -610,6 +663,8 @@
       try { await this._hass.callService("select", "select_option", { entity_id: s.dataset.select, option: s.value }); }
       catch (err) { this._toast(`${this._t("flow_failed")} : ${err?.message || err}`); }
     }
+    _saveOff() { try { localStorage.setItem("holm-so-hidden", JSON.stringify([...this._off])); } catch (_) { /* rien */ } }
+    _vis(r) { return r.kwh > 0 && !this._off.has(r.d.id); }
     _toast(message) { this.dispatchEvent(new CustomEvent("hass-notification", { detail: { message }, bubbles: true, composed: true })); }
 
     // ───────────── réglages : formulaires de Solar Optimizer lui-même ─────────────
@@ -774,12 +829,13 @@
       const key = `${this._mode}/${a.getTime()}`;
       try {
         const devs = this._devices();
+        for (const d of devs) d.psensor = this._powerSensor(d);
         const prefs = await this._energyPrefs();
         const eIds = prefs ? [...prefs.solar, ...prefs.imp.map((x) => x.id), ...prefs.exp.map((x) => x.id)] : [];
         const priceIds = prefs ? [...new Set([...prefs.imp, ...prefs.exp].map((x) => x.price).filter(Boolean))] : [];
         const [stats, hist, estats] = await Promise.all([
           this._hass.callWS({ type: "recorder/statistics_during_period", start_time: a.toISOString(), end_time: b.toISOString(),
-            statistic_ids: [s.production, s.grid], period: "5minute", types: ["mean"] }),
+            statistic_ids: [...new Set([s.production, s.grid, ...devs.map((d) => d.psensor).filter(Boolean)])], period: "5minute", types: ["mean"], units: { power: "W" } }),
           this._hass.callWS({ type: "history/history_during_period", start_time: a.toISOString(), end_time: b.toISOString(),
             entity_ids: [...devs.map((d) => d.id), ...(s.price ? [s.price] : []), ...priceIds], minimal_response: true, no_attributes: true, significant_changes_only: false }),
           eIds.length ? this._hass.callWS({ type: "recorder/statistics_during_period", start_time: a.toISOString(), end_time: b.toISOString(),
@@ -829,6 +885,7 @@
         const dk = dayKey(t); const dd = (days[dk] = days[dk] || { prod: 0, self: 0, exp: 0, house: 0, sav: 0 });
         dd.prod += P * k; dd.self += self * k; dd.exp += exp * k; dd.house += house * k; dd.sav += self * k * price + exp * k * sell;
       }
+      const bmap = new Map(buckets.map((b) => [b.t, b]));
       const hc = [];
       for (const p of prices) if (hcPrice !== null && hcPrice !== hpPrice && Math.abs(num(p.s) - hcPrice) < 1e-6) hc.push([p.t0, p.t1]);
       const runs = devs.map((d) => {
@@ -844,8 +901,30 @@
           }
         }
         const total = segs.reduce((n, g) => n + (g.t1 - g.t0) / 1000, 0);
-        return { d, segs, perDay, total };
+        // puissance par tranche de 5 min : capteur réel si disponible, sinon puissance max × part du temps en marche
+        const pw = new Map();
+        const rows = d.psensor ? stats[d.psensor] || [] : [];
+        const est = !rows.length;
+        if (!est) for (const r of rows) pw.set(r.start, Math.max(0, r.mean || 0));
+        else {
+          const pmax = num(d.s.attributes.power_max) || num(d.opts?.power_max) || 0;
+          for (const b of buckets) {
+            let on = 0;
+            for (const g of segs) on += Math.max(0, Math.min(g.t1, b.t + 300000) - Math.max(g.t0, b.t));
+            if (on) pw.set(b.t, pmax * (on / 300000));
+          }
+        }
+        let kwh = 0, solarKwh = 0; const dayKwh = {};
+        for (const [t, w] of pw) {
+          const e = w / 12000; kwh += e;
+          const b = bmap.get(t); const share = b && b.house > 0 ? Math.min(1, Math.max(0, b.P - b.exp) / b.house) : 0;
+          solarKwh += e * share;
+          const dk = dayKey(t); dayKwh[dk] = (dayKwh[dk] || 0) + e;
+        }
+        return { d, segs, perDay, total, pw, est, kwh, solarKwh, dayKwh };
       });
+      const PAL = ["#22d3ee", "#a78bfa", "#f472b6", "#84cc16", "#fb7185", "#38bdf8", "#facc15", "#34d399"];
+      runs.forEach((r, i) => { r.color = PAL[i % PAL.length]; });
       return { A, B, END: end.getTime(), buckets, tot, days, hc, runs };
     }
 
@@ -903,12 +982,93 @@
           <div class="kpi eur"><span>${this._t("kpi_savings")}</span><b>${this._eur(T.savSelf + T.savSell)}</b><small>${this._t("sav_detail", { a: this._eur(T.savSelf), b: this._eur(T.savSell) })}</small></div>
         </div>
         <div class="src">${this._t(H.energy ? "src_energy" : "src_power")}</div>
+        <div class="seg ch"><button class="${this._chart === "devices" ? "on" : ""}" data-act="chart" data-c="devices"><ha-icon icon="mdi:power-plug-outline"></ha-icon>${this._t("ch_devices")}</button><button class="${this._chart === "energy" ? "on" : ""}" data-act="chart" data-c="energy"><ha-icon icon="mdi:chart-areaspline"></ha-icon>${this._t("ch_energy")}</button></div>
+        ${this._chart === "devices" ? `
+        <div class="chart" id="chart">${wk ? this._devWeekChart(H) : this._devDayChart(H)}<div class="tip" id="tip" hidden></div></div>
+        ${this._devLegend(H)}` : `
         <div class="chart" id="chart">${wk ? this._weekChart(H) : this._dayChart(H)}<div class="tip" id="tip" hidden></div></div>
-        <div class="legend lg2"><span><i class="sunc"></i>${this._t("c_prod")}</span><span><i class="housec"></i>${this._t("c_house")}</span><span><i class="exp"></i>${this._t("c_surplus")}</span>${H.hc.length && !wk ? `<span><i class="hcc"></i>${this._t("offpeak")}</span>` : ""}</div>
+        <div class="legend lg2"><span><i class="sunc"></i>${this._t("c_prod")}</span><span><i class="housec"></i>${this._t("c_house")}</span><span><i class="exp"></i>${this._t("c_surplus")}</span>${H.hc.length && !wk ? `<span><i class="hcc"></i>${this._t("offpeak")}</span>` : ""}</div>`}
         <div class="sh sm"><span>${this._t("timeline")}</span></div>
         ${wk ? this._weekRuns(H) : this._dayRuns(H)}
-        <div class="legend"><span><i class="solarr"></i>${this._t("solar")}</span><span><i class="hcr"></i>${this._t("offpeak")}</span></div>`;
-      if (!wk) this._bindTip(H);
+        <div class="legend"><span><i class="solarr"></i>${this._t("hp")}</span><span><i class="hcr"></i>${this._t("hc")}</span></div>`;
+      if (!wk) this._bindTip(H, this._chart === "devices"
+        ? (b) => `<b>${this._time(new Date(b.t))}</b>${this._off.has("__prod") ? "" : `<span class="sunt">${this._t("c_prod")} ${this._w(b.P)}</span>`}${H.runs.filter((r) => this._vis(r) && (r.pw.get(b.t) || 0) >= 1).map((r) => `<span style="color:${r.color}">${esc(r.d.name)} ${this._w(r.pw.get(b.t))}</span>`).join("")}`
+        : (b) => `<b>${this._time(new Date(b.t))}</b><span class="sunt">${this._t("c_prod")} ${this._w(b.P)}</span><span class="houset">${this._t("c_house")} ${this._w(b.house)}</span><span class="expt">${this._t("c_surplus")} ${this._w(b.exp)}</span>`);
+    }
+    _devDayChart(H) {
+      const { W, Hh, pad } = this._geom();
+      this._cg = { W, pl: pad.l, iw: W - pad.l - pad.r };
+      const iw = W - pad.l - pad.r, ih = Hh - pad.t - pad.b;
+      const bk = H.buckets, runs = H.runs.filter((r) => this._vis(r)), showP = !this._off.has("__prod");
+      const stackMax = Math.max(...bk.map((b) => runs.reduce((n, r) => n + (r.pw.get(b.t) || 0), 0)), ...(showP ? bk.map((b) => b.P) : []), 10);
+      const max = this._nice(stackMax);
+      const x = (t) => pad.l + ((t - H.A) / (H.END - H.A)) * iw;
+      const y = (v) => pad.t + ih - (v / max) * ih;
+      const cum = bk.map(() => 0);
+      const layers = runs.map((r) => {
+        const lo = cum.slice();
+        bk.forEach((b, i) => { cum[i] += r.pw.get(b.t) || 0; });
+        const hi = cum.slice();
+        let d = "";
+        bk.forEach((b, i) => { d += `${i ? "L" : "M"}${x(b.t + 150000).toFixed(1)},${y(hi[i]).toFixed(1)}`; });
+        for (let i = bk.length - 1; i >= 0; i--) d += `L${x(bk[i].t + 150000).toFixed(1)},${y(lo[i]).toFixed(1)}`;
+        return `<path d="${d}Z" fill="${r.color}" fill-opacity=".75" stroke="${r.color}" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+      });
+      const prod = bk.map((b, i) => `${i ? "L" : "M"}${x(b.t + 150000).toFixed(1)},${y(b.P).toFixed(1)}`).join("");
+      const ticks = [0, max / 2, max];
+      const now = Date.now();
+      return `<svg viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}" class="svg">
+        ${ticks.map((v) => `<line class="grid" x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${pad.l - 6}" y="${y(v) + 4}" text-anchor="end">${v >= 1000 ? this._nf(v / 1000, v % 1000 ? 1 : 0) + " kW" : this._nf(v) + " W"}</text>`).join("")}
+        ${[0, 3, 6, 9, 12, 15, 18, 21, 24].map((h) => `<text class="ax" x="${x(H.A + h * 3600000)}" y="${Hh - 6}" text-anchor="${h === 0 ? "start" : h === 24 ? "end" : "middle"}">${h}h</text>`).join("")}
+        ${showP ? `<path class="a-sun soft" d="${bk.length ? `M${x(bk[0].t + 150000)},${y(0)}${prod.replace(/^M/, "L")}L${x(bk[bk.length - 1].t + 150000)},${y(0)}Z` : ""}"/>` : ""}
+        ${layers.join("")}
+        ${showP ? `<path class="l-sun dash" d="${prod}"/>` : ""}
+        ${now > H.A && now < H.END ? `<line class="now" x1="${x(now)}" x2="${x(now)}" y1="${pad.t}" y2="${pad.t + ih}"/>` : ""}
+        <line class="guide" id="guide" x1="0" x2="0" y1="${pad.t}" y2="${pad.t + ih}" style="display:none"/>
+        <rect class="hov" id="hov" x="${pad.l}" y="${pad.t}" width="${iw}" height="${ih}"/>
+      </svg>`;
+    }
+    _devWeekChart(H) {
+      const { W, Hh, pad } = this._geom();
+      const iw = W - pad.l - pad.r, ih = Hh - pad.t - pad.b;
+      const keys = []; for (let i = 0; i < 7; i++) { const d = new Date(H.A); keys.push(new Date(d.getFullYear(), d.getMonth(), d.getDate() + i).getTime()); }
+      const runs = H.runs.filter((r) => this._vis(r)), showP = !this._off.has("__prod");
+      const max = this._nice(Math.max(...keys.map((k) => Math.max(runs.reduce((n, r) => n + (r.dayKwh[k] || 0), 0), showP ? H.days[k]?.prod || 0 : 0)), 0.1));
+      const y = (v) => pad.t + ih - (v / max) * ih;
+      const slot = iw / 7, bw = slot * 0.5;
+      const fmtD = new Intl.DateTimeFormat(this._hass?.locale?.language || this._l, { weekday: "short", day: "numeric" });
+      return `<svg viewBox="0 0 ${W} ${Hh}" width="${W}" height="${Hh}" class="svg">
+        ${[0, max / 2, max].map((v) => `<line class="grid" x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${pad.l - 6}" y="${y(v) + 4}" text-anchor="end">${this._nf(v, v < 1 ? 2 : v < 10 && v % 1 ? 1 : 0)} kWh</text>`).join("")}
+        ${keys.map((k, i) => {
+          const cx = pad.l + slot * i + slot / 2;
+          let acc = 0;
+          const bars = runs.map((r) => { const v = r.dayKwh[k] || 0; const y0 = y(acc), y1 = y(acc + v); acc += v;
+            return v ? `<rect x="${cx - bw / 2}" y="${y1}" width="${bw}" height="${Math.max(0, y0 - y1)}" fill="${r.color}" fill-opacity=".8"><title>${esc(r.d.name)} — ${this._kwh(v)}</title></rect>` : ""; }).join("");
+          const pv = showP ? H.days[k]?.prod || 0 : 0;
+          return `<g>${bars}${pv ? `<line class="pmark" x1="${cx - bw / 2 - 4}" x2="${cx + bw / 2 + 4}" y1="${y(pv)}" y2="${y(pv)}"><title>${this._t("c_prod")} ${this._kwh(pv)}</title></line>` : ""}
+            <text class="ax" x="${cx}" y="${Hh - 6}" text-anchor="middle">${esc(fmtD.format(new Date(k)))}</text></g>`;
+        }).join("")}
+      </svg>`;
+    }
+    _devLegend(H) {
+      const runs = H.runs;
+      if (!runs.length) return "";
+      const any = runs.some((r) => r.est && r.kwh > 0);
+      const offAny = runs.some((r) => r.kwh > 0 && this._off.has(r.d.id)) || this._off.has("__prod");
+      const pOff = this._off.has("__prod");
+      return `<div class="dlist" title="${this._t("toggle_hint")}">${runs.map((r) => {
+          const off = this._off.has(r.d.id);
+          return r.kwh > 0 ? `<button class="dli ${off ? "off" : ""}" data-act="devtoggle" data-id="${esc(r.d.id)}" aria-pressed="${!off}">
+          <i style="background:${r.color}"></i><span class="n">${esc(r.d.name)}</span>
+          <span class="v">${r.est ? "≈ " : ""}${this._kwh(r.kwh)}</span>
+          <span class="s">${this._t("solar_share", { a: this._nf((r.solarKwh / r.kwh) * 100) })}</span></button>`
+          : `<div class="dli z"><i style="background:${r.color}"></i><span class="n">${esc(r.d.name)}</span><span class="v">${this._kwh(0)}</span><span class="s">—</span></div>`;
+        }).join("")}
+        <div class="dfoot">
+          <button class="dli prod ${pOff ? "off" : ""}" data-act="devtoggle" data-id="__prod" aria-pressed="${!pOff}"><i class="sunc"></i><span class="n">${this._t("c_prod")}</span></button>
+          ${offAny ? `<button class="lnk all" data-act="showall"><ha-icon icon="mdi:eye-outline"></ha-icon>${this._t("show_all")}</button>` : ""}
+        </div>
+        <div class="legend"><span class="hint">${this._t("toggle_hint")}</span>${any ? `<span class="est">${this._t("estimated")}</span>` : ""}</div></div>`;
     }
     _nice(v) { if (v <= 0) return 1000; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; return ([1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find((x) => n <= x) || 10) * p; }
     _geom() {
@@ -947,7 +1107,7 @@
         <rect class="hov" id="hov" x="${pad.l}" y="${pad.t}" width="${iw}" height="${ih}"/>
       </svg>`;
     }
-    _bindTip(H) {
+    _bindTip(H, html) {
       const svg = this.shadowRoot.querySelector("#chart svg"), hov = this.shadowRoot.getElementById("hov"), tip = this.shadowRoot.getElementById("tip"), guide = this.shadowRoot.getElementById("guide");
       if (!svg || !hov) return;
       const { W, pl, iw } = this._cg;
@@ -961,7 +1121,7 @@
         const gx = pl + ((best.t + 150000 - H.A) / (H.END - H.A)) * iw;
         guide.setAttribute("x1", gx); guide.setAttribute("x2", gx); guide.style.display = "";
         tip.hidden = false;
-        tip.innerHTML = `<b>${this._time(new Date(best.t))}</b><span class="sunt">${this._t("c_prod")} ${this._w(best.P)}</span><span class="houset">${this._t("c_house")} ${this._w(best.house)}</span><span class="expt">${this._t("c_surplus")} ${this._w(best.exp)}</span>`;
+        tip.innerHTML = html(best);
         const px = ((gx / W) * r.width);
         tip.style.left = `${Math.min(Math.max(px - tip.offsetWidth / 2, 0), r.width - tip.offsetWidth)}px`;
       };
@@ -1179,6 +1339,30 @@
     .tabs button.on ha-icon { color: var(--primary-color); }
     .tabs .cnt { font-style: normal; font-size: 10.5px; min-width: 16px; height: 16px; line-height: 16px; padding: 0 4px; border-radius: 99px; background: var(--so-sun); color: #111; }
     .sh.top { margin-top: 12px; }
+    .seg.ch { display: flex; margin: 14px 0 0; }
+    .seg.ch button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; }
+    .seg.ch ha-icon { --mdc-icon-size: 16px; }
+    .svg .a-sun.soft { fill: color-mix(in srgb, var(--so-sun) 12%, transparent); }
+    .svg .l-sun.dash { stroke-dasharray: 5 4; }
+    .svg .pmark { stroke: var(--so-sun); stroke-width: 2.5; stroke-dasharray: 4 3; }
+    .dlist { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
+    .dli { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 76px; align-items: center; gap: 8px; font-size: 13px; color: var(--primary-text-color);
+           font: inherit; font-size: 13px; text-align: left; width: 100%; background: none; border: 0; padding: 4px 6px; margin: 0 -6px; border-radius: 8px; }
+    button.dli { cursor: pointer; user-select: none; -webkit-user-select: none; transition: opacity .2s, background .2s; }
+    button.dli:hover { background: var(--so-soft); }
+    button.dli.off { opacity: .4; } button.dli.off .n { text-decoration: line-through; }
+    button.dli.off i { background: transparent !important; box-shadow: inset 0 0 0 2px var(--secondary-text-color); }
+    .dli.prod { grid-template-columns: 10px auto; width: auto; }
+    .dli.prod i.sunc { background: var(--so-sun); }
+    .dfoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .lnk.all { font-size: 12px; }
+    .legend .hint { opacity: .8; }
+    .dli i { width: 10px; height: 10px; border-radius: 3px; }
+    .dli .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dli .v { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .dli .s { font-size: 12px; color: var(--secondary-text-color); text-align: right; white-space: nowrap; }
+    .dli.z { opacity: .5; }
+    .legend .est { font-style: italic; }
     .kpi { border-radius: 12px; padding: 9px 11px; background: var(--so-soft); display: flex; flex-direction: column; min-width: 0; border-top: 3px solid transparent; }
     .kpi.sun { border-top-color: var(--so-sun); } .kpi.self { border-top-color: color-mix(in srgb, var(--so-sun) 60%, var(--so-exp)); } .kpi.exp { border-top-color: var(--so-exp); } .kpi.eur { border-top-color: var(--primary-color); }
     .kpi span { font-size: 11px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -1261,7 +1445,7 @@
       if (!this.shadowRoot) this.attachShadow({ mode: "open" });
       const l = this._l;
       const labels = { title: "l_title", language: "l_language", show_live: "l_show_live", show_devices: "l_show_devices", show_history: "l_show_history",
-        history_mode: "l_history_mode", default_tab: "l_default_tab", production_entity: "l_production", grid_entity: "l_grid", price_entity: "l_price", exclude: "l_exclude" };
+        history_mode: "l_history_mode", history_chart: "l_history_chart", default_tab: "l_default_tab", production_entity: "l_production", grid_entity: "l_grid", price_entity: "l_price", exclude: "l_exclude" };
       this.shadowRoot.innerHTML = "";
       const f = document.createElement("ha-form");
       f.hass = this._hass;
@@ -1274,6 +1458,7 @@
         { type: "grid", name: "", schema: [
           { name: "default_tab", selector: { select: { mode: "dropdown", options: [{ value: "none", label: tr(l, "tab_none") }, { value: "devices", label: tr(l, "tab_devices") }, { value: "history", label: tr(l, "history") }] } } },
           { name: "history_mode", selector: { select: { mode: "dropdown", options: [{ value: "day", label: tr(l, "day") }, { value: "week", label: tr(l, "week") }] } } },
+          { name: "history_chart", selector: { select: { mode: "dropdown", options: [{ value: "devices", label: tr(l, "ch_devices") }, { value: "energy", label: tr(l, "ch_energy") }] } } },
           { name: "language", selector: { select: { mode: "dropdown", options: [{ value: "", label: tr(l, "auto_lang") }, ...Object.entries(LANG_NAMES).map(([value, label]) => ({ value, label }))] } } },
         ] },
         { name: "exclude", selector: { entity: { multiple: true, filter: { integration: DOMAIN, domain: "switch" } } } },
@@ -1283,13 +1468,14 @@
           { name: "price_entity", selector: { entity: { domain: ["sensor", "input_number", "number"] } } },
         ] },
       ];
-      f.data = { show_live: true, show_devices: true, show_history: true, history_mode: "day", default_tab: "none", language: "", title: tr(l, "title"), ...this._c };
+      f.data = { show_live: true, show_devices: true, show_history: true, history_mode: "day", history_chart: "devices", default_tab: "none", language: "", title: tr(l, "title"), ...this._c };
       f.addEventListener("value-changed", (e) => {
         e.stopPropagation();
         const v = { ...this._c, ...e.detail.value };
         for (const k of ["show_live", "show_devices", "show_history"]) if (v[k] === true) delete v[k];
         if (v.history_mode === "day") delete v.history_mode;
         if (!v.default_tab || v.default_tab === "none") delete v.default_tab;
+        if (v.history_chart === "devices") delete v.history_chart;
         for (const k of ["language", "production_entity", "grid_entity", "price_entity"]) if (!v[k]) delete v[k];
         if (Array.isArray(v.exclude) && !v.exclude.length) delete v.exclude;
         const relang = (v.language || "") !== (this._c.language || "");

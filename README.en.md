@@ -25,7 +25,15 @@ Solar Optimizer stays the engine: the card only uses its entities, its actions a
 |---|---|
 | ![HOLM Solar Optimizer card](docs/images/carte.png) | ![History](docs/images/historique.png) |
 
-### 🆕 What's new in 1.2.0
+### 🆕 What's new in 1.4.0
+
+- 👁️ **Choose the devices on the chart**: under the “Devices” chart, a click on a device hides or shows it, a double-click shows only that one; production can be hidden too, so the scale fits a small device. “Show all” button; the choice is remembered by the browser.
+
+### What's new in 1.3.0
+
+- 🔌 **“Devices” chart** in the history, shown by default, next to the “Energy” chart: each managed device's power, stacked under the production curve (day), or its kWh per day (7 days). Under the chart, each device's consumption and its **solar share**.
+- 📏 **Real measurements**: the card finds the managed device's power sensor on its own (same device in Home Assistant). Otherwise, set it with `power_sensors`; failing that, consumption is estimated (max power × run time, marked ≈).
+- `history_chart` option to choose the chart shown first.
 
 - 📦 **Compact by default**: only the live section shows; the **Devices** and **History** tabs open with a click and close the same way. `default_tab` option to open a tab from the start.
 - 🏷️ **Labelled bars**: “Production: 62 % used on site · 38 % sold” and “Home: 15 % solar · 85 % grid”.
@@ -74,6 +82,8 @@ history_mode: day      # day or week (7 days)
 | `show_history` | Show the history | `true` |
 | `default_tab` | Tab open at start: `none` (collapsed card), `devices` or `history` | `none` |
 | `history_mode` | History shown first: `day` or `week` | `day` |
+| `history_chart` | Chart shown first: `devices` or `energy` | `devices` |
+| `power_sensors` | Real power sensor of a managed device, when it is not on the same device (see below) | — |
 | `exclude` | Devices to hide (`switch.solar_optimizer_…`) | — |
 | `production_entity` | Solar production sensor (W) | Solar Optimizer's |
 | `grid_entity` | Net consumption (W, negative when exporting) | Solar Optimizer's |
@@ -81,11 +91,19 @@ history_mode: day      # day or week (7 days)
 
 The visual editor is available.
 
+**A device's power sensor**: the card looks for a power sensor on the same device as the managed entity (the water heater and its `sensor.chauffe_eau_power`, for instance). If the measurement comes from a separate smart plug, set it:
+
+```yaml
+power_sensors:
+  switch.solar_optimizer_deshumidificateur: sensor.prise_deshumidificateur_power
+```
+
 ## How it works
 
 - **Live**: the large tile shows grid import, or the surplus sold when the panels produce more than the home uses. Production, Home (grid import + solar used on site) and Managed (power of the devices switched on by Solar Optimizer) complete it. The two bars split production (used on site / sold) and home consumption (solar / grid). Live reads the sensors set in Solar Optimizer (production and net consumption). The surplus is the power exported to the grid; home consumption is grid import plus production used on site.
 - **Force** calls `solar_optimizer.start_device` (with or without a duration); **Stop** calls `solar_optimizer.stop_device`. While a device is forced, Solar Optimizer disables automatic control and restores it at the end.
 - **Totals** (production, import, export, self-consumption) come from the energy meters set in Home Assistant's **Energy dashboard**, in 5-minute steps: the same figures, up to date to the last 5 minutes (cards based on hourly statistics stop at the last full hour). Import cost uses the Energy dashboard prices; savings add up the energy used on site, at the buy price of that moment, and the export income. Without an Energy dashboard, the card falls back to average power; the source is shown under the tiles.
+- **The Devices chart** adds up each device's power (5-minute statistics of its sensor). Its solar share is the share of the home covered by solar at the same moment, applied to its consumption.
 - **Curves** come from 5-minute power statistics (kept 10 days by default) and the timeline from the devices' history.
 - **Settings** open Solar Optimizer's own options and add-device forms, as in Settings → Devices & services: the card writes nothing else. Deleting a device stays in Home Assistant.
 
