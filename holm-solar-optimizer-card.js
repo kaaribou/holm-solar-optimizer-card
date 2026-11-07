@@ -1,4 +1,4 @@
-/* holm-solar-optimizer-card — https://github.com/kaaribou/holm-solar-optimizer-card — licence MIT — v1.4.1 */
+/* holm-solar-optimizer-card — https://github.com/kaaribou/holm-solar-optimizer-card — licence MIT — v1.4.2 */
 // HOLM Solar Optimizer Card — une interface moderne pour Solar Optimizer (jmcollin78/solar_optimizer), qui reste le moteur.
 // Config (éditeur visuel disponible) :
 //   type: custom:holm-solar-optimizer-card
@@ -6,15 +6,19 @@
 //   default_tab: none            # none (carte repliée) | devices | history (onglet ouvert au départ)
 //   history_mode: day            # day | week (vue de l'historique à l'ouverture)
 //   history_chart: devices       # devices | energy (graphique de l'historique à l'ouverture)
+//   offpeak_devices:             # facultatif : appareils qui auraient tourné en heures creuses sans Solar Optimizer
+//     - switch.solar_optimizer_chauffe_eau  # (gain calculé au prix HC de HOLM HP/HC au lieu du prix du moment)
 //   power_sensors:               # facultatif : capteur de puissance réel d'un appareil piloté
 //     switch.solar_optimizer_deshumidificateur: sensor.prise_deshumidificateur_power
 //   show_live / show_devices / show_history: true
 //   production_entity: sensor.xxx   # facultatif : sinon celui de Solar Optimizer
 //   grid_entity: sensor.xxx         # facultatif : consommation nette (négative à la revente)
+//   battery_entity: sensor.xxx      # facultatif : état de charge de la batterie (%), sinon celui de Solar Optimizer
+//   battery_power_entity: sensor.xxx # facultatif : puissance nette de la batterie (W, positive en décharge)
 //   price_entity: sensor.tarif_actuel  # facultatif : prix d'achat (HOLM HP/HC détecté automatiquement)
 //   exclude: [switch.solar_optimizer_xxx]
 (() => {
-  const VERSION = "1.4.1";
+  const VERSION = "1.4.2";
   const DOMAIN = "solar_optimizer";
 
   // ───────────────────────── traductions ─────────────────────────
@@ -27,8 +31,8 @@
       title: "Solar Optimizer", surplus: "Surplus", import: "Achat réseau", production: "Production", house: "Maison", grid: "Réseau", managed: "Pilotés",
       buy: "Achat", sell: "Revente", hp: "Heures pleines", hc: "Heures creuses", devices: "Appareils pilotés", weight: "Poids des priorités",
       st_on: "En marche", st_forced: "Forcé", st_until: "jusqu'à {t}", st_offpeak: "Rattrapage heures creuses", st_disabled: "Pilotage désactivé",
-      st_unusable: "Condition non remplie", st_waiting: "Durée minimale en cours", st_idle: "Attend du surplus", st_available: "disponible à {t}",
-      run_today: "Aujourd'hui", min_short: "min", max_short: "max", priority: "Priorité",
+      st_unusable: "Condition non remplie", st_pause: "Pause entre deux activations · disponible à {t}", st_maxed: "Maximum du jour atteint", st_battery: "Batterie sous le seuil ({a} % < {b} %)", st_waiting: "Durée minimale en cours", st_idle: "Attend du surplus", st_available: "disponible à {t}",
+      min_left: "reste {a}", catchup: "rattrapage HC à {t}", gauge_help: "Barre : temps de marche du jour, jusqu'au maximum. Trait vertical : minimum du jour ; s'il n'est pas atteint, Solar Optimizer le complète en heures creuses.", run_today: "Aujourd'hui", min_short: "min", max_short: "max", priority: "Priorité",
       prio_0: "Très basse", prio_1: "Basse", prio_2: "Moyenne", prio_3: "Haute", prio_4: "Très haute", weight_none: "Aucun",
       auto: "Pilotage automatique", force: "Forcer", stop: "Arrêter", force_for: "Forcer la marche pendant", unlimited: "Sans limite",
       d_power: "Puissance", d_on_min: "Marche min.", d_off_min: "Arrêt min.", d_offpeak: "Heure creuse", d_offpeak_max: "Max en heures creuses",
@@ -38,12 +42,12 @@
       quote_warn: "Cette condition est entourée de guillemets : Home Assistant la lit comme du texte, elle risque de ne jamais être vraie.",
       quote_fix: "Retirer les guillemets", flow_failed: "L'opération a échoué",
       history: "Historique", day: "Jour", week: "7 jours", today: "Aujourd'hui", yesterday: "Hier",
-      kpi_prod: "Production", kpi_self: "Autoconsommation", kpi_sold: "Revendu", kpi_savings: "Économies", kpi_cover: "Couverture solaire",
+      kpi_prod: "Production", kpi_self: "Autoconsommation", kpi_sold: "Revendu", kpi_savings: "Économies solaires", kpi_so: "Gain Solar Optimizer", so_detail: "{a} solaires captés", so_help: "Solaire consommé par les appareils pilotés au-delà de la consommation de base de la maison : sans Solar Optimizer, il aurait été revendu. Valorisé à (prix d'achat du moment − prix de revente).", l_offpeak_devices: "Appareils qui auraient tourné en heures creuses (gain au prix HC)", kpi_cover: "Couverture solaire",
       sav_detail: "{a} consommés · {b} revendus", self_detail: "{a} consommés sur place", c_prod: "Production", c_house: "Consommation", c_surplus: "Surplus",
       timeline: "Marche des appareils", solar: "Solaire", offpeak: "Heures creuses", total: "Total",
       loading: "Chargement…", error: "Erreur", no_devices: "Aucun appareil Solar Optimizer trouvé.", no_data: "Pas de données sur cette période",
       l_title: "Titre", l_language: "Langue", auto_lang: "Automatique (profil)", l_show_live: "Direct", l_show_devices: "Appareils", l_show_history: "Historique",
-      l_history_mode: "Historique à l'ouverture", l_sources: "Sources (facultatif)", l_production: "Production solaire (W)", l_grid: "Consommation nette (W, négative à la revente)",
+      l_history_mode: "Historique à l'ouverture", l_sources: "Sources (facultatif)", l_production: "Production solaire (W)", battery: "Batterie", bat_chg: "en charge {a}", bat_dis: "en décharge {a}", l_battery: "Batterie : état de charge (%)", l_battery_power: "Batterie : puissance nette (W, positive en décharge)", l_grid: "Consommation nette (W, négative à la revente)",
       l_price: "Prix d'achat (€/kWh)", l_exclude: "Appareils masqués",
       card_name: "HOLM – Solar Optimizer", card_desc: "Surplus en direct, appareils pilotés, historique et réglages de Solar Optimizer",
     },
@@ -55,8 +59,8 @@
       title: "Solar Optimizer", surplus: "Surplus", import: "Grid import", production: "Production", house: "Home", grid: "Grid", managed: "Managed",
       buy: "Buy", sell: "Sell", hp: "Peak hours", hc: "Off-peak hours", devices: "Managed devices", weight: "Priority weight",
       st_on: "Running", st_forced: "Forced", st_until: "until {t}", st_offpeak: "Off-peak catch-up", st_disabled: "Control disabled",
-      st_unusable: "Condition not met", st_waiting: "Minimum duration running", st_idle: "Waiting for surplus", st_available: "available at {t}",
-      run_today: "Today", min_short: "min", max_short: "max", priority: "Priority",
+      st_unusable: "Condition not met", st_pause: "Pause between two activations · available at {t}", st_maxed: "Daily maximum reached", st_battery: "Battery below threshold ({a} % < {b} %)", st_waiting: "Minimum duration running", st_idle: "Waiting for surplus", st_available: "available at {t}",
+      min_left: "{a} left", catchup: "off-peak catch-up at {t}", gauge_help: "Bar: today's run time, up to the maximum. Vertical mark: daily minimum; if not reached, Solar Optimizer completes it during off-peak hours.", run_today: "Today", min_short: "min", max_short: "max", priority: "Priority",
       prio_0: "Very low", prio_1: "Low", prio_2: "Medium", prio_3: "High", prio_4: "Very high", weight_none: "None",
       auto: "Automatic control", force: "Force", stop: "Stop", force_for: "Force on for", unlimited: "No limit",
       d_power: "Power", d_on_min: "Min. on", d_off_min: "Min. off", d_offpeak: "Off-peak time", d_offpeak_max: "Max off-peak",
@@ -66,12 +70,12 @@
       quote_warn: "This condition is wrapped in quotes: Home Assistant reads it as text, so it may never be true.",
       quote_fix: "Remove the quotes", flow_failed: "The operation failed",
       history: "History", day: "Day", week: "7 days", today: "Today", yesterday: "Yesterday",
-      kpi_prod: "Production", kpi_self: "Self-consumption", kpi_sold: "Sold", kpi_savings: "Savings", kpi_cover: "Solar coverage",
+      kpi_prod: "Production", kpi_self: "Self-consumption", kpi_sold: "Sold", kpi_savings: "Solar savings", kpi_so: "Solar Optimizer gain", so_detail: "{a} of solar captured", so_help: "Solar used by the managed devices beyond the home base load: without Solar Optimizer it would have been sold. Valued at (current buy price − sell price).", l_offpeak_devices: "Devices that would have run off-peak (gain at off-peak price)", kpi_cover: "Solar coverage",
       sav_detail: "{a} used · {b} sold", self_detail: "{a} used on site", c_prod: "Production", c_house: "Consumption", c_surplus: "Surplus",
       timeline: "Device runs", solar: "Solar", offpeak: "Off-peak", total: "Total",
       loading: "Loading…", error: "Error", no_devices: "No Solar Optimizer device found.", no_data: "No data for this period",
       l_title: "Title", l_language: "Language", auto_lang: "Automatic (profile)", l_show_live: "Live", l_show_devices: "Devices", l_show_history: "History",
-      l_history_mode: "History shown first", l_sources: "Sources (optional)", l_production: "Solar production (W)", l_grid: "Net consumption (W, negative when exporting)",
+      l_history_mode: "History shown first", l_sources: "Sources (optional)", l_production: "Solar production (W)", battery: "Battery", bat_chg: "charging {a}", bat_dis: "discharging {a}", l_battery: "Battery: state of charge (%)", l_battery_power: "Battery: net power (W, positive when discharging)", l_grid: "Net consumption (W, negative when exporting)",
       l_price: "Buy price (€/kWh)", l_exclude: "Hidden devices",
       card_name: "HOLM – Solar Optimizer", card_desc: "Live surplus, managed devices, history and settings for Solar Optimizer",
     },
@@ -83,8 +87,8 @@
       title: "Solar Optimizer", surplus: "Überschuss", import: "Netzbezug", production: "Erzeugung", house: "Haus", grid: "Netz", managed: "Gesteuert",
       buy: "Bezug", sell: "Einspeisung", hp: "Hochtarif", hc: "Niedertarif", devices: "Gesteuerte Geräte", weight: "Prioritätsgewicht",
       st_on: "In Betrieb", st_forced: "Erzwungen", st_until: "bis {t}", st_offpeak: "Nachholen im Niedertarif", st_disabled: "Steuerung deaktiviert",
-      st_unusable: "Bedingung nicht erfüllt", st_waiting: "Mindestdauer läuft", st_idle: "Wartet auf Überschuss", st_available: "verfügbar um {t}",
-      run_today: "Heute", min_short: "min", max_short: "max", priority: "Priorität",
+      st_unusable: "Bedingung nicht erfüllt", st_pause: "Pause zwischen zwei Aktivierungen · verfügbar um {t}", st_maxed: "Tagesmaximum erreicht", st_battery: "Batterie unter Schwelle ({a} % < {b} %)", st_waiting: "Mindestdauer läuft", st_idle: "Wartet auf Überschuss", st_available: "verfügbar um {t}",
+      min_left: "noch {a}", catchup: "Nachholen im NT ab {t}", gauge_help: "Balken: heutige Laufzeit bis zum Maximum. Senkrechter Strich: Tagesminimum; wird es nicht erreicht, ergänzt Solar Optimizer es im Niedertarif.", run_today: "Heute", min_short: "min", max_short: "max", priority: "Priorität",
       prio_0: "Sehr niedrig", prio_1: "Niedrig", prio_2: "Mittel", prio_3: "Hoch", prio_4: "Sehr hoch", weight_none: "Keins",
       auto: "Automatische Steuerung", force: "Erzwingen", stop: "Stoppen", force_for: "Einschalten für", unlimited: "Unbegrenzt",
       d_power: "Leistung", d_on_min: "Min. an", d_off_min: "Min. aus", d_offpeak: "Niedertarif ab", d_offpeak_max: "Max. im Niedertarif",
@@ -94,12 +98,12 @@
       quote_warn: "Diese Bedingung steht in Anführungszeichen: Home Assistant liest sie als Text, sie ist womöglich nie wahr.",
       quote_fix: "Anführungszeichen entfernen", flow_failed: "Vorgang fehlgeschlagen",
       history: "Verlauf", day: "Tag", week: "7 Tage", today: "Heute", yesterday: "Gestern",
-      kpi_prod: "Erzeugung", kpi_self: "Eigenverbrauch", kpi_sold: "Eingespeist", kpi_savings: "Ersparnis", kpi_cover: "Solare Deckung",
+      kpi_prod: "Erzeugung", kpi_self: "Eigenverbrauch", kpi_sold: "Eingespeist", kpi_savings: "Solarersparnis", kpi_so: "Solar-Optimizer-Gewinn", so_detail: "{a} Solarstrom genutzt", so_help: "Solarstrom, den die gesteuerten Geräte über den Grundverbrauch hinaus nutzen: ohne Solar Optimizer wäre er eingespeist worden. Bewertet mit (aktueller Bezugspreis − Einspeisepreis).", l_offpeak_devices: "Geräte, die sonst im Niedertarif gelaufen wären (Gewinn zum NT-Preis)", kpi_cover: "Solare Deckung",
       sav_detail: "{a} verbraucht · {b} eingespeist", self_detail: "{a} selbst verbraucht", c_prod: "Erzeugung", c_house: "Verbrauch", c_surplus: "Überschuss",
       timeline: "Gerätelaufzeiten", solar: "Solar", offpeak: "Niedertarif", total: "Gesamt",
       loading: "Wird geladen…", error: "Fehler", no_devices: "Kein Solar-Optimizer-Gerät gefunden.", no_data: "Keine Daten in diesem Zeitraum",
       l_title: "Titel", l_language: "Sprache", auto_lang: "Automatisch (Profil)", l_show_live: "Live", l_show_devices: "Geräte", l_show_history: "Verlauf",
-      l_history_mode: "Verlauf beim Öffnen", l_sources: "Quellen (optional)", l_production: "Solarerzeugung (W)", l_grid: "Nettoverbrauch (W, negativ bei Einspeisung)",
+      l_history_mode: "Verlauf beim Öffnen", l_sources: "Quellen (optional)", l_production: "Solarerzeugung (W)", battery: "Batterie", bat_chg: "lädt {a}", bat_dis: "entlädt {a}", l_battery: "Batterie: Ladezustand (%)", l_battery_power: "Batterie: Nettoleistung (W, positiv beim Entladen)", l_grid: "Nettoverbrauch (W, negativ bei Einspeisung)",
       l_price: "Bezugspreis (€/kWh)", l_exclude: "Ausgeblendete Geräte",
       card_name: "HOLM – Solar Optimizer", card_desc: "Live-Überschuss, gesteuerte Geräte, Verlauf und Einstellungen für Solar Optimizer",
     },
@@ -111,8 +115,8 @@
       title: "Solar Optimizer", surplus: "Excedente", import: "Compra a la red", production: "Producción", house: "Casa", grid: "Red", managed: "Gestionados",
       buy: "Compra", sell: "Venta", hp: "Horas punta", hc: "Horas valle", devices: "Dispositivos gestionados", weight: "Peso de prioridad",
       st_on: "En marcha", st_forced: "Forzado", st_until: "hasta las {t}", st_offpeak: "Recuperación en horas valle", st_disabled: "Gestión desactivada",
-      st_unusable: "Condición no cumplida", st_waiting: "Duración mínima en curso", st_idle: "Esperando excedente", st_available: "disponible a las {t}",
-      run_today: "Hoy", min_short: "mín", max_short: "máx", priority: "Prioridad",
+      st_unusable: "Condición no cumplida", st_pause: "Pausa entre dos activaciones · disponible a las {t}", st_maxed: "Máximo diario alcanzado", st_battery: "Batería bajo el umbral ({a} % < {b} %)", st_waiting: "Duración mínima en curso", st_idle: "Esperando excedente", st_available: "disponible a las {t}",
+      min_left: "faltan {a}", catchup: "recuperación en valle a las {t}", gauge_help: "Barra: tiempo de funcionamiento de hoy, hasta el máximo. Marca vertical: mínimo diario; si no se alcanza, Solar Optimizer lo completa en horas valle.", run_today: "Hoy", min_short: "mín", max_short: "máx", priority: "Prioridad",
       prio_0: "Muy baja", prio_1: "Baja", prio_2: "Media", prio_3: "Alta", prio_4: "Muy alta", weight_none: "Ninguno",
       auto: "Gestión automática", force: "Forzar", stop: "Detener", force_for: "Forzar durante", unlimited: "Sin límite",
       d_power: "Potencia", d_on_min: "Encendido mín.", d_off_min: "Apagado mín.", d_offpeak: "Hora valle", d_offpeak_max: "Máx. en horas valle",
@@ -122,12 +126,12 @@
       quote_warn: "Esta condición está entre comillas: Home Assistant la lee como texto y puede que nunca sea verdadera.",
       quote_fix: "Quitar las comillas", flow_failed: "La operación ha fallado",
       history: "Historial", day: "Día", week: "7 días", today: "Hoy", yesterday: "Ayer",
-      kpi_prod: "Producción", kpi_self: "Autoconsumo", kpi_sold: "Vendido", kpi_savings: "Ahorro", kpi_cover: "Cobertura solar",
+      kpi_prod: "Producción", kpi_self: "Autoconsumo", kpi_sold: "Vendido", kpi_savings: "Ahorro solar", kpi_so: "Ganancia Solar Optimizer", so_detail: "{a} solares captados", so_help: "Energía solar consumida por los aparatos gestionados más allá del consumo base de la casa: sin Solar Optimizer se habría vendido. Valorada a (precio de compra actual − precio de venta).", l_offpeak_devices: "Aparatos que habrían funcionado en horas valle (ganancia a precio valle)", kpi_cover: "Cobertura solar",
       sav_detail: "{a} consumidos · {b} vendidos", self_detail: "{a} consumidos in situ", c_prod: "Producción", c_house: "Consumo", c_surplus: "Excedente",
       timeline: "Funcionamiento de los dispositivos", solar: "Solar", offpeak: "Horas valle", total: "Total",
       loading: "Cargando…", error: "Error", no_devices: "No se ha encontrado ningún dispositivo de Solar Optimizer.", no_data: "Sin datos en este periodo",
       l_title: "Título", l_language: "Idioma", auto_lang: "Automático (perfil)", l_show_live: "En directo", l_show_devices: "Dispositivos", l_show_history: "Historial",
-      l_history_mode: "Historial al abrir", l_sources: "Fuentes (opcional)", l_production: "Producción solar (W)", l_grid: "Consumo neto (W, negativo al vender)",
+      l_history_mode: "Historial al abrir", l_sources: "Fuentes (opcional)", l_production: "Producción solar (W)", battery: "Batería", bat_chg: "cargando {a}", bat_dis: "descargando {a}", l_battery: "Batería: estado de carga (%)", l_battery_power: "Batería: potencia neta (W, positiva al descargar)", l_grid: "Consumo neto (W, negativo al vender)",
       l_price: "Precio de compra (€/kWh)", l_exclude: "Dispositivos ocultos",
       card_name: "HOLM – Solar Optimizer", card_desc: "Excedente en directo, dispositivos gestionados, historial y ajustes de Solar Optimizer",
     },
@@ -139,8 +143,8 @@
       title: "Solar Optimizer", surplus: "Surplus", import: "Prelievo dalla rete", production: "Produzione", house: "Casa", grid: "Rete", managed: "Gestiti",
       buy: "Acquisto", sell: "Vendita", hp: "Ore di punta", hc: "Ore fuori punta", devices: "Dispositivi gestiti", weight: "Peso delle priorità",
       st_on: "In funzione", st_forced: "Forzato", st_until: "fino alle {t}", st_offpeak: "Recupero fuori punta", st_disabled: "Gestione disattivata",
-      st_unusable: "Condizione non soddisfatta", st_waiting: "Durata minima in corso", st_idle: "In attesa di surplus", st_available: "disponibile alle {t}",
-      run_today: "Oggi", min_short: "min", max_short: "max", priority: "Priorità",
+      st_unusable: "Condizione non soddisfatta", st_pause: "Pausa tra due attivazioni · disponibile alle {t}", st_maxed: "Massimo giornaliero raggiunto", st_battery: "Batteria sotto la soglia ({a} % < {b} %)", st_waiting: "Durata minima in corso", st_idle: "In attesa di surplus", st_available: "disponibile alle {t}",
+      min_left: "mancano {a}", catchup: "recupero in fascia ridotta alle {t}", gauge_help: "Barra: tempo di funzionamento di oggi, fino al massimo. Tacca verticale: minimo giornaliero; se non raggiunto, Solar Optimizer lo completa in fascia ridotta.", run_today: "Oggi", min_short: "min", max_short: "max", priority: "Priorità",
       prio_0: "Molto bassa", prio_1: "Bassa", prio_2: "Media", prio_3: "Alta", prio_4: "Molto alta", weight_none: "Nessuno",
       auto: "Gestione automatica", force: "Forza", stop: "Ferma", force_for: "Forza l'accensione per", unlimited: "Senza limite",
       d_power: "Potenza", d_on_min: "Accensione min.", d_off_min: "Spegnimento min.", d_offpeak: "Ora fuori punta", d_offpeak_max: "Max fuori punta",
@@ -150,12 +154,12 @@
       quote_warn: "Questa condizione è tra virgolette: Home Assistant la legge come testo e potrebbe non essere mai vera.",
       quote_fix: "Rimuovi le virgolette", flow_failed: "Operazione non riuscita",
       history: "Cronologia", day: "Giorno", week: "7 giorni", today: "Oggi", yesterday: "Ieri",
-      kpi_prod: "Produzione", kpi_self: "Autoconsumo", kpi_sold: "Venduto", kpi_savings: "Risparmio", kpi_cover: "Copertura solare",
+      kpi_prod: "Produzione", kpi_self: "Autoconsumo", kpi_sold: "Venduto", kpi_savings: "Risparmio solare", kpi_so: "Guadagno Solar Optimizer", so_detail: "{a} solari catturati", so_help: "Energia solare usata dai dispositivi gestiti oltre il consumo di base della casa: senza Solar Optimizer sarebbe stata venduta. Valorizzata a (prezzo d'acquisto attuale − prezzo di vendita).", l_offpeak_devices: "Dispositivi che avrebbero funzionato in fascia ridotta (guadagno al prezzo ridotto)", kpi_cover: "Copertura solare",
       sav_detail: "{a} consumati · {b} venduti", self_detail: "{a} consumati in loco", c_prod: "Produzione", c_house: "Consumo", c_surplus: "Surplus",
       timeline: "Funzionamento dei dispositivi", solar: "Solare", offpeak: "Fuori punta", total: "Totale",
       loading: "Caricamento…", error: "Errore", no_devices: "Nessun dispositivo Solar Optimizer trovato.", no_data: "Nessun dato per questo periodo",
       l_title: "Titolo", l_language: "Lingua", auto_lang: "Automatica (profilo)", l_show_live: "In diretta", l_show_devices: "Dispositivi", l_show_history: "Cronologia",
-      l_history_mode: "Cronologia all'apertura", l_sources: "Fonti (facoltative)", l_production: "Produzione solare (W)", l_grid: "Consumo netto (W, negativo in immissione)",
+      l_history_mode: "Cronologia all'apertura", l_sources: "Fonti (facoltative)", l_production: "Produzione solare (W)", battery: "Batteria", bat_chg: "in carica {a}", bat_dis: "in scarica {a}", l_battery: "Batteria: stato di carica (%)", l_battery_power: "Batteria: potenza netta (W, positiva in scarica)", l_grid: "Consumo netto (W, negativo in immissione)",
       l_price: "Prezzo di acquisto (€/kWh)", l_exclude: "Dispositivi nascosti",
       card_name: "HOLM – Solar Optimizer", card_desc: "Surplus in diretta, dispositivi gestiti, cronologia e impostazioni di Solar Optimizer",
     },
@@ -167,8 +171,8 @@
       title: "Solar Optimizer", surplus: "Overschot", import: "Afname van het net", production: "Productie", house: "Huis", grid: "Net", managed: "Gestuurd",
       buy: "Afname", sell: "Teruglevering", hp: "Piekuren", hc: "Daluren", devices: "Gestuurde apparaten", weight: "Prioriteitsgewicht",
       st_on: "Actief", st_forced: "Geforceerd", st_until: "tot {t}", st_offpeak: "Inhalen in daluren", st_disabled: "Sturing uitgeschakeld",
-      st_unusable: "Voorwaarde niet vervuld", st_waiting: "Minimale duur loopt", st_idle: "Wacht op overschot", st_available: "beschikbaar om {t}",
-      run_today: "Vandaag", min_short: "min", max_short: "max", priority: "Prioriteit",
+      st_unusable: "Voorwaarde niet vervuld", st_pause: "Pauze tussen twee activeringen · beschikbaar om {t}", st_maxed: "Dagmaximum bereikt", st_battery: "Batterij onder drempel ({a} % < {b} %)", st_waiting: "Minimale duur loopt", st_idle: "Wacht op overschot", st_available: "beschikbaar om {t}",
+      min_left: "nog {a}", catchup: "inhalen in daltarief om {t}", gauge_help: "Balk: looptijd van vandaag, tot het maximum. Verticaal streepje: dagminimum; wordt het niet gehaald, dan vult Solar Optimizer het aan in het daltarief.", run_today: "Vandaag", min_short: "min", max_short: "max", priority: "Prioriteit",
       prio_0: "Zeer laag", prio_1: "Laag", prio_2: "Gemiddeld", prio_3: "Hoog", prio_4: "Zeer hoog", weight_none: "Geen",
       auto: "Automatische sturing", force: "Forceren", stop: "Stoppen", force_for: "Inschakelen gedurende", unlimited: "Onbeperkt",
       d_power: "Vermogen", d_on_min: "Min. aan", d_off_min: "Min. uit", d_offpeak: "Daluren vanaf", d_offpeak_max: "Max. in daluren",
@@ -178,12 +182,12 @@
       quote_warn: "Deze voorwaarde staat tussen aanhalingstekens: Home Assistant leest ze als tekst, ze is mogelijk nooit waar.",
       quote_fix: "Aanhalingstekens verwijderen", flow_failed: "De bewerking is mislukt",
       history: "Geschiedenis", day: "Dag", week: "7 dagen", today: "Vandaag", yesterday: "Gisteren",
-      kpi_prod: "Productie", kpi_self: "Eigen verbruik", kpi_sold: "Teruggeleverd", kpi_savings: "Besparing", kpi_cover: "Zonnedekking",
+      kpi_prod: "Productie", kpi_self: "Eigen verbruik", kpi_sold: "Teruggeleverd", kpi_savings: "Zonnebesparing", kpi_so: "Solar Optimizer-winst", so_detail: "{a} zonnestroom benut", so_help: "Zonnestroom die de gestuurde apparaten boven het basisverbruik gebruiken: zonder Solar Optimizer was die teruggeleverd. Gewaardeerd tegen (huidige inkoopprijs − terugleverprijs).", l_offpeak_devices: "Apparaten die anders in het daltarief hadden gedraaid (winst tegen dalprijs)", kpi_cover: "Zonnedekking",
       sav_detail: "{a} verbruikt · {b} teruggeleverd", self_detail: "{a} zelf verbruikt", c_prod: "Productie", c_house: "Verbruik", c_surplus: "Overschot",
       timeline: "Werking van de apparaten", solar: "Zon", offpeak: "Daluren", total: "Totaal",
       loading: "Laden…", error: "Fout", no_devices: "Geen Solar Optimizer-apparaat gevonden.", no_data: "Geen gegevens voor deze periode",
       l_title: "Titel", l_language: "Taal", auto_lang: "Automatisch (profiel)", l_show_live: "Live", l_show_devices: "Apparaten", l_show_history: "Geschiedenis",
-      l_history_mode: "Geschiedenis bij openen", l_sources: "Bronnen (optioneel)", l_production: "Zonneproductie (W)", l_grid: "Nettoverbruik (W, negatief bij teruglevering)",
+      l_history_mode: "Geschiedenis bij openen", l_sources: "Bronnen (optioneel)", l_production: "Zonneproductie (W)", battery: "Batterij", bat_chg: "laadt {a}", bat_dis: "ontlaadt {a}", l_battery: "Batterij: laadtoestand (%)", l_battery_power: "Batterij: nettovermogen (W, positief bij ontladen)", l_grid: "Nettoverbruik (W, negatief bij teruglevering)",
       l_price: "Afnameprijs (€/kWh)", l_exclude: "Verborgen apparaten",
       card_name: "HOLM – Solar Optimizer", card_desc: "Live overschot, gestuurde apparaten, geschiedenis en instellingen van Solar Optimizer",
     },
@@ -195,8 +199,8 @@
       title: "Solar Optimizer", surplus: "Excedente", import: "Compra à rede", production: "Produção", house: "Casa", grid: "Rede", managed: "Geridos",
       buy: "Compra", sell: "Venda", hp: "Horas de ponta", hc: "Horas de vazio", devices: "Dispositivos geridos", weight: "Peso das prioridades",
       st_on: "Em funcionamento", st_forced: "Forçado", st_until: "até às {t}", st_offpeak: "Recuperação em horas de vazio", st_disabled: "Gestão desativada",
-      st_unusable: "Condição não cumprida", st_waiting: "Duração mínima em curso", st_idle: "À espera de excedente", st_available: "disponível às {t}",
-      run_today: "Hoje", min_short: "mín", max_short: "máx", priority: "Prioridade",
+      st_unusable: "Condição não cumprida", st_pause: "Pausa entre duas ativações · disponível às {t}", st_maxed: "Máximo diário atingido", st_battery: "Bateria abaixo do limite ({a} % < {b} %)", st_waiting: "Duração mínima em curso", st_idle: "À espera de excedente", st_available: "disponível às {t}",
+      min_left: "faltam {a}", catchup: "recuperação em vazio às {t}", gauge_help: "Barra: tempo de funcionamento de hoje, até ao máximo. Traço vertical: mínimo diário; se não for atingido, o Solar Optimizer completa-o em horas de vazio.", run_today: "Hoje", min_short: "mín", max_short: "máx", priority: "Prioridade",
       prio_0: "Muito baixa", prio_1: "Baixa", prio_2: "Média", prio_3: "Alta", prio_4: "Muito alta", weight_none: "Nenhum",
       auto: "Gestão automática", force: "Forçar", stop: "Parar", force_for: "Forçar durante", unlimited: "Sem limite",
       d_power: "Potência", d_on_min: "Ligado mín.", d_off_min: "Desligado mín.", d_offpeak: "Hora de vazio", d_offpeak_max: "Máx. em vazio",
@@ -206,12 +210,12 @@
       quote_warn: "Esta condição está entre aspas: o Home Assistant lê-a como texto e pode nunca ser verdadeira.",
       quote_fix: "Remover as aspas", flow_failed: "A operação falhou",
       history: "Histórico", day: "Dia", week: "7 dias", today: "Hoje", yesterday: "Ontem",
-      kpi_prod: "Produção", kpi_self: "Autoconsumo", kpi_sold: "Vendido", kpi_savings: "Poupança", kpi_cover: "Cobertura solar",
+      kpi_prod: "Produção", kpi_self: "Autoconsumo", kpi_sold: "Vendido", kpi_savings: "Poupança solar", kpi_so: "Ganho Solar Optimizer", so_detail: "{a} solares captados", so_help: "Energia solar consumida pelos aparelhos geridos além do consumo base da casa: sem o Solar Optimizer teria sido vendida. Valorizada a (preço de compra atual − preço de venda).", l_offpeak_devices: "Aparelhos que teriam funcionado em vazio (ganho ao preço de vazio)", kpi_cover: "Cobertura solar",
       sav_detail: "{a} consumidos · {b} vendidos", self_detail: "{a} consumidos no local", c_prod: "Produção", c_house: "Consumo", c_surplus: "Excedente",
       timeline: "Funcionamento dos dispositivos", solar: "Solar", offpeak: "Vazio", total: "Total",
       loading: "A carregar…", error: "Erro", no_devices: "Nenhum dispositivo Solar Optimizer encontrado.", no_data: "Sem dados neste período",
       l_title: "Título", l_language: "Idioma", auto_lang: "Automático (perfil)", l_show_live: "Em direto", l_show_devices: "Dispositivos", l_show_history: "Histórico",
-      l_history_mode: "Histórico ao abrir", l_sources: "Fontes (opcional)", l_production: "Produção solar (W)", l_grid: "Consumo líquido (W, negativo ao vender)",
+      l_history_mode: "Histórico ao abrir", l_sources: "Fontes (opcional)", l_production: "Produção solar (W)", battery: "Bateria", bat_chg: "a carregar {a}", bat_dis: "a descarregar {a}", l_battery: "Bateria: estado de carga (%)", l_battery_power: "Bateria: potência líquida (W, positiva ao descarregar)", l_grid: "Consumo líquido (W, negativo ao vender)",
       l_price: "Preço de compra (€/kWh)", l_exclude: "Dispositivos ocultos",
       card_name: "HOLM – Solar Optimizer", card_desc: "Excedente em direto, dispositivos geridos, histórico e definições do Solar Optimizer",
     },
@@ -223,8 +227,8 @@
       title: "Solar Optimizer", surplus: "Nadwyżka", import: "Pobór z sieci", production: "Produkcja", house: "Dom", grid: "Sieć", managed: "Sterowane",
       buy: "Zakup", sell: "Sprzedaż", hp: "Godziny szczytu", hc: "Godziny pozaszczytowe", devices: "Sterowane urządzenia", weight: "Waga priorytetów",
       st_on: "Pracuje", st_forced: "Wymuszone", st_until: "do {t}", st_offpeak: "Nadrabianie poza szczytem", st_disabled: "Sterowanie wyłączone",
-      st_unusable: "Warunek niespełniony", st_waiting: "Trwa czas minimalny", st_idle: "Czeka na nadwyżkę", st_available: "dostępne o {t}",
-      run_today: "Dziś", min_short: "min", max_short: "maks", priority: "Priorytet",
+      st_unusable: "Warunek niespełniony", st_pause: "Przerwa między dwoma włączeniami · dostępne o {t}", st_maxed: "Osiągnięto dzienne maksimum", st_battery: "Bateria poniżej progu ({a} % < {b} %)", st_waiting: "Trwa czas minimalny", st_idle: "Czeka na nadwyżkę", st_available: "dostępne o {t}",
+      min_left: "zostało {a}", catchup: "nadrobienie w taryfie nocnej o {t}", gauge_help: "Pasek: dzisiejszy czas pracy, do maksimum. Pionowa kreska: dzienne minimum; jeśli nie zostanie osiągnięte, Solar Optimizer uzupełni je w taryfie nocnej.", run_today: "Dziś", min_short: "min", max_short: "maks", priority: "Priorytet",
       prio_0: "Bardzo niski", prio_1: "Niski", prio_2: "Średni", prio_3: "Wysoki", prio_4: "Bardzo wysoki", weight_none: "Brak",
       auto: "Sterowanie automatyczne", force: "Wymuś", stop: "Zatrzymaj", force_for: "Wymuś pracę przez", unlimited: "Bez limitu",
       d_power: "Moc", d_on_min: "Min. praca", d_off_min: "Min. postój", d_offpeak: "Poza szczytem od", d_offpeak_max: "Maks. poza szczytem",
@@ -234,12 +238,12 @@
       quote_warn: "Ten warunek jest w cudzysłowie: Home Assistant odczytuje go jako tekst, może nigdy nie być prawdziwy.",
       quote_fix: "Usuń cudzysłów", flow_failed: "Operacja nie powiodła się",
       history: "Historia", day: "Dzień", week: "7 dni", today: "Dziś", yesterday: "Wczoraj",
-      kpi_prod: "Produkcja", kpi_self: "Autokonsumpcja", kpi_sold: "Sprzedane", kpi_savings: "Oszczędności", kpi_cover: "Pokrycie solarne",
+      kpi_prod: "Produkcja", kpi_self: "Autokonsumpcja", kpi_sold: "Sprzedane", kpi_savings: "Oszczędności solarne", kpi_so: "Zysk Solar Optimizer", so_detail: "{a} energii słonecznej przechwycone", so_help: "Energia słoneczna zużyta przez sterowane urządzenia ponad bazowe zużycie domu: bez Solar Optimizer zostałaby sprzedana. Wyceniona jako (bieżąca cena zakupu − cena sprzedaży).", l_offpeak_devices: "Urządzenia, które działałyby w taryfie nocnej (zysk po cenie nocnej)", kpi_cover: "Pokrycie solarne",
       sav_detail: "{a} zużyte · {b} sprzedane", self_detail: "{a} zużyte na miejscu", c_prod: "Produkcja", c_house: "Zużycie", c_surplus: "Nadwyżka",
       timeline: "Praca urządzeń", solar: "Słońce", offpeak: "Poza szczytem", total: "Razem",
       loading: "Ładowanie…", error: "Błąd", no_devices: "Nie znaleziono urządzeń Solar Optimizer.", no_data: "Brak danych w tym okresie",
       l_title: "Tytuł", l_language: "Język", auto_lang: "Automatycznie (profil)", l_show_live: "Na żywo", l_show_devices: "Urządzenia", l_show_history: "Historia",
-      l_history_mode: "Historia po otwarciu", l_sources: "Źródła (opcjonalnie)", l_production: "Produkcja solarna (W)", l_grid: "Zużycie netto (W, ujemne przy oddawaniu)",
+      l_history_mode: "Historia po otwarciu", l_sources: "Źródła (opcjonalnie)", l_production: "Produkcja solarna (W)", battery: "Bateria", bat_chg: "ładowanie {a}", bat_dis: "rozładowanie {a}", l_battery: "Bateria: stan naładowania (%)", l_battery_power: "Bateria: moc netto (W, dodatnia przy rozładowaniu)", l_grid: "Zużycie netto (W, ujemne przy oddawaniu)",
       l_price: "Cena zakupu (€/kWh)", l_exclude: "Ukryte urządzenia",
       card_name: "HOLM – Solar Optimizer", card_desc: "Nadwyżka na żywo, sterowane urządzenia, historia i ustawienia Solar Optimizer",
     },
@@ -366,6 +370,7 @@
       return {
         production: this._c.production_entity || c.power_production_entity_id || so.production,
         grid: this._c.grid_entity || c.power_consumption_entity_id || so.consumption,
+        battery: this._c.battery_entity || c.battery_soc_entity_id, batteryPower: this._c.battery_power_entity || c.battery_charge_power_entity_id,
         price, sell: c.sell_cost_entity_id, sellTax: c.sell_tax_percent_entity_id, total: so.total, weight: so.weight,
       };
     }
@@ -422,7 +427,7 @@
     }
     _signature() {
       const s = this._sources();
-      const ids = [s.production, s.grid, s.price, s.total, s.weight];
+      const ids = [s.production, s.grid, s.price, s.total, s.weight, s.battery, s.batteryPower];
       for (const d of this._devices()) ids.push(d.id, d.enable, d.prio, d.ontime);
       const st = this._hass.states;
       return ids.map((i) => { const x = st[i]; return x ? x.state + (i.startsWith("switch.solar_optimizer_") ? JSON.stringify(x.attributes) : "") : "-"; }).join("|");
@@ -474,6 +479,23 @@
       root.querySelectorAll(".pane").forEach((p) => { p.hidden = p.dataset.p !== this._tab; });
     }
 
+    // batterie : entités de Solar Optimizer (ou options de la carte) ; sinon niveau vu par les appareils pilotés si un seuil batterie est réglé
+    _battery() {
+      const s = this._sources();
+      let soc = s.battery ? num(this._st(s.battery)?.state) : null;
+      if (soc === null && !s.battery) {
+        const d = this._devices().map((x) => x.s.attributes).find((a) => num(a.battery_soc_threshold) > 0 && num(a.battery_soc) !== null);
+        if (d) soc = num(d.battery_soc);
+      }
+      if (soc === null) return null;
+      soc = Math.max(0, Math.min(100, soc));
+      const p = s.batteryPower ? num(this._st(s.batteryPower)?.state) : null; // > 0 en décharge, < 0 en charge (convention Solar Optimizer)
+      const lvl = Math.round(soc / 10) * 10;
+      const chg = p !== null && p < -5, dis = p !== null && p > 5;
+      const icon = chg ? `mdi:battery-charging${lvl >= 100 ? "-100" : lvl <= 0 ? "-outline" : "-" + Math.max(10, lvl)}` : lvl >= 100 ? "mdi:battery" : lvl <= 0 ? "mdi:battery-outline" : `mdi:battery-${Math.max(10, lvl)}`;
+      const label = this._t("battery") + (chg ? " · " + this._t("bat_chg", { a: this._w(-p) }) : dis ? " · " + this._t("bat_dis", { a: this._w(p) }) : "");
+      return { soc, p: p ?? 0, icon, label, title: this._t("battery") + (p !== null ? ` · ${this._w(p)}` : "") };
+    }
     _renderLive() {
       const root = this.shadowRoot; if (!root || !this._hass) return;
       const s = this._sources();
@@ -482,6 +504,7 @@
       const exp = Math.max(0, -grid), imp = Math.max(0, grid);
       const self = Math.max(0, prod - exp), house = imp + self;
       const managed = num(this._st(s.total)?.state) || 0;
+      const bat = this._battery();
 
       // prix du moment dans l'en-tête
       const pe = root.getElementById("price");
@@ -506,10 +529,11 @@
             <div class="val">${this._w(exporting ? exp : imp)}</div>
             <div class="sub">${exporting ? `<ha-icon icon="mdi:transmission-tower-export"></ha-icon>${this._t("sell")} ${this._nf(this._sellPrice(), 4)} €/kWh` : `<ha-icon icon="mdi:transmission-tower-import"></ha-icon>${this._t("grid")}`}</div>
           </div>
-          <div class="stats">
+          <div class="stats ${bat ? "n4" : ""}">
             <div class="stat sun"><ha-icon icon="mdi:solar-power"></ha-icon><div><b>${this._w(prod)}</b><span>${this._t("production")}</span></div></div>
             <div class="stat home"><ha-icon icon="mdi:home-lightning-bolt-outline"></ha-icon><div><b>${this._w(house)}</b><span>${this._t("house")}</span></div></div>
             <div class="stat so"><ha-icon icon="mdi:robot-outline"></ha-icon><div><b>${this._w(managed)}</b><span>${this._t("managed")}</span></div></div>
+            ${bat ? `<div class="stat bat ${bat.p < -5 ? "chg" : ""}" title="${esc(bat.title)}"><ha-icon icon="${bat.icon}"></ha-icon><div><b>${this._nf(bat.soc)} %</b><span>${esc(bat.label)}</span></div></div>` : ""}
           </div>
         </div>
         <div class="bars">
@@ -529,9 +553,19 @@
       if (a.is_active && offpeak) return { k: "offpeak", txt: this._t("st_offpeak") };
       if (a.is_active) return { k: "on", txt: this._t("st_on") };
       if (!a.is_enabled) return { k: "off", txt: this._t("st_disabled") };
-      if (!a.is_usable) return { k: "warn", txt: this._t("st_unusable") };
-      if (a.is_waiting) return { k: "wait", txt: this._t("st_waiting") };
+      // is_usable de Solar Optimizer est faux aussi pendant l'attente entre deux activations, au maximum du jour
+      // ou sous le seuil de batterie : on distingue ces cas avant « condition non remplie »
+      const now = new Date();
       const nd = a.next_date_available ? new Date(a.next_date_available) : null;
+      const ndp = a.next_date_available_power ? new Date(a.next_date_available_power) : null;
+      const wait = a.can_change_power ? ndp : nd;
+      const ota = this._st(d.ontime)?.attributes || {};
+      const onS = num(this._st(d.ontime)?.state), maxS = num(ota.max_on_time_per_day_sec);
+      if (!a.is_usable && onS !== null && maxS && onS >= maxS) return { k: "max", txt: this._t("st_maxed") };
+      if (wait && wait > now) return { k: "wait", txt: this._t("st_pause", { t: this._time(wait) }) };
+      const soc = num(a.battery_soc), socT = num(a.battery_soc_threshold);
+      if (!a.is_usable && soc !== null && socT !== null && soc < socT) return { k: "warn", txt: this._t("st_battery", { a: this._nf(soc), b: this._nf(socT) }) };
+      if (!a.is_usable) return { k: "warn", txt: this._t("st_unusable") };
       return { k: "idle", txt: this._t("st_idle") + (nd && nd > new Date() ? " · " + this._t("st_available", { t: this._time(nd) }) : "") };
     }
     _icon(d) {
@@ -556,6 +590,7 @@
         const maxS = num(ota.max_on_time_per_day_sec) ?? (num(d.opts?.max_on_time_per_day_min) ?? 0) * 60;
         const minS = (num(d.opts?.min_on_time_per_day_min) || 0) * 60;
         const scale = Math.max(maxS, minS, on, 1);
+        const offT = ota.offpeak_time && /^\d{1,2}:\d{2}/.test(String(ota.offpeak_time)) ? String(ota.offpeak_time).slice(0, 5) : "";
         const pr = this._st(d.prio);
         const en = this._st(d.enable)?.state === "on";
         const open = this._open === d.id;
@@ -568,11 +603,11 @@
             <div class="dm">
               <div class="dn"><span class="nm">${esc(d.name)}</span>${power ? `<span class="pw">${this._w(power)}</span>` : ""}</div>
               <div class="ds">${esc(st.txt)}</div>
-              <div class="gauge" title="${this._t("run_today")} ${this._dur(on)}${minS ? ` · ${this._t("min_short")} ${this._dur(minS)}` : ""}${maxS ? ` · ${this._t("max_short")} ${this._dur(maxS)}` : ""}">
+              <div class="gauge" title="${esc(this._t("gauge_help"))}">
                 <i class="fill ${minS && on >= minS ? "ok" : ""}" style="width:${((on / scale) * 100).toFixed(1)}%"></i>
                 ${minS ? `<i class="mk" style="left:${((minS / scale) * 100).toFixed(1)}%"></i>` : ""}
               </div>
-              <div class="dt"><span>${this._t("run_today")} <b>${this._dur(on)}</b></span><span>${minS ? `${this._t("min_short")} ${this._dur(minS)} · ` : ""}${maxS ? `${this._t("max_short")} ${this._dur(maxS)}` : ""}</span></div>
+              <div class="dt"><span>${this._t("run_today")} <b>${this._dur(on)}</b></span><span>${minS ? `<i class="mki"></i>${this._t("min_short")} ${this._dur(minS)} ${on >= minS ? `<em class="ok">✓</em>` : `<em>(${this._t("min_left", { a: this._dur(minS - on) })}${offT && en ? ` · ${this._t("catchup", { t: offT })}` : ""})</em>`} · ` : ""}${maxS ? `${this._t("max_short")} ${this._dur(maxS)}` : ""}</span></div>
             </div>
             <div class="da">
               ${pr ? `<select class="prio p${PRIOS.indexOf(pr.state)}" data-select="${esc(pr.entity_id)}" title="${this._t("priority")}">${(pr.attributes.options || PRIOS).map((o) => `<option value="${esc(o)}" ${o === pr.state ? "selected" : ""}>${esc(prioLabel(o))}</option>`).join("")}</select>` : ""}
@@ -889,7 +924,16 @@
       const hc = [];
       for (const p of prices) if (hcPrice !== null && hcPrice !== hpPrice && Math.abs(num(p.s) - hcPrice) < 1e-6) hc.push([p.t0, p.t1]);
       const runs = devs.map((d) => {
-        const segs = this._series(hist, d.id, A, B).filter((x) => x.s === "on").map((x) => ({ t0: x.t0, t1: x.t1, hc: isHC(x.t0 + 1000) }));
+        // marche en heures creuses : fenêtre de rattrapage de Solar Optimizer (heure creuse → remise à zéro), sinon période HC de HOLM HP/HC
+        const ota = this._st(d.ontime)?.attributes || {};
+        const hm = (v) => { const m = /^(\d{1,2}):(\d{2})/.exec(String(v ?? "")); return m ? +m[1] * 60 + +m[2] : null; };
+        const o0 = hm(ota.offpeak_time), o1 = hm(ota.raz_time);
+        const inOff = (t) => {
+          if (o0 === null || o1 === null || o0 === o1) return false;
+          const x = new Date(t), mm = x.getHours() * 60 + x.getMinutes();
+          return o0 < o1 ? mm >= o0 && mm < o1 : mm >= o0 || mm < o1;
+        };
+        const segs = this._series(hist, d.id, A, B).filter((x) => x.s === "on").map((x) => ({ t0: x.t0, t1: x.t1, hc: inOff(x.t0 + 1000) || isHC(x.t0 + 1000) }));
         const perDay = {};
         for (const g of segs) {
           // découpe par jour
@@ -923,9 +967,28 @@
         }
         return { d, segs, perDay, total, pw, est, kwh, solarKwh, dayKwh };
       });
+      // gain apporté par Solar Optimizer : la consommation de base (maison sans les appareils pilotés) passe en premier ;
+      // le solaire restant, qui serait parti sur le réseau, est attribué aux appareils pilotés et valorisé (prix d'achat − prix de revente)
+      const offRef = new Set(this._c.offpeak_devices || []);
+      const so = { gain: 0, kwh: 0, est: false };
+      for (const r of runs) { r.solarKwh = 0; r.gain = 0; }
+      for (const bk of buckets) {
+        let M = 0; for (const r of runs) M += r.pw.get(bk.t) || 0;
+        if (M <= 0) continue;
+        const cap = Math.min(M, Math.max(0, bk.P - Math.max(0, bk.house - M)));
+        if (cap <= 0) continue;
+        const price = priceAt(bk.t + 150000) || 0;
+        for (const r of runs) {
+          const w = r.pw.get(bk.t) || 0; if (!w) continue;
+          const e = (cap * w / M) / 12000;
+          const ref = offRef.has(r.d.id) && hcPrice !== null ? hcPrice : price;
+          r.solarKwh += e; r.gain += e * (ref - sell);
+          so.kwh += e; so.gain += e * (ref - sell); if (r.est) so.est = true;
+        }
+      }
       const PAL = ["#22d3ee", "#a78bfa", "#f472b6", "#84cc16", "#fb7185", "#38bdf8", "#facc15", "#34d399"];
       runs.forEach((r, i) => { r.color = PAL[i % PAL.length]; });
-      return { A, B, END: end.getTime(), buckets, tot, days, hc, runs };
+      return { A, B, END: end.getTime(), buckets, tot, days, hc, runs, so };
     }
 
     // bilans recalculés depuis les compteurs d'énergie (mêmes chiffres que le tableau Énergie)
@@ -979,6 +1042,7 @@
           <div class="kpi imp"><span>${this._t("kpi_import")}</span><b>${this._kwh(T.imp)}</b><small>${T.impCost !== undefined ? this._t("imp_cost", { a: this._eur(T.impCost) }) : ""}</small></div>
           <div class="kpi exp"><span>${this._t("kpi_sold")}</span><b>${this._kwh(T.exp)}</b><small>+${this._t("sell_gain", { a: this._eur(T.savSell) })}</small></div>
           <div class="kpi self"><span>${this._t("kpi_self")}</span><b>${this._nf(selfPct)} %</b><small>${this._t("self_detail", { a: this._kwh(T.self) })}</small></div>
+          <div class="kpi gain" title="${esc(this._t("so_help"))}"><span>${this._t("kpi_so")}</span><b>${H.so.est ? "≈ " : ""}${this._eur(H.so.gain)}</b><small>${this._t("so_detail", { a: this._kwh(H.so.kwh) })}</small></div>
           <div class="kpi eur"><span>${this._t("kpi_savings")}</span><b>${this._eur(T.savSelf + T.savSell)}</b><small>${this._t("sav_detail", { a: this._eur(T.savSelf), b: this._eur(T.savSell) })}</small></div>
         </div>
         <div class="src">${this._t(H.energy ? "src_energy" : "src_power")}</div>
@@ -1061,8 +1125,8 @@
           return r.kwh > 0 ? `<button class="dli ${off ? "off" : ""}" data-act="devtoggle" data-id="${esc(r.d.id)}" aria-pressed="${!off}">
           <i style="background:${r.color}"></i><span class="n">${esc(r.d.name)}</span>
           <span class="v">${r.est ? "≈ " : ""}${this._kwh(r.kwh)}</span>
-          <span class="s">${this._t("solar_share", { a: this._nf((r.solarKwh / r.kwh) * 100) })}</span></button>`
-          : `<div class="dli z"><i style="background:${r.color}"></i><span class="n">${esc(r.d.name)}</span><span class="v">${this._kwh(0)}</span><span class="s">—</span></div>`;
+          <span class="s">${this._t("solar_share", { a: this._nf((r.solarKwh / r.kwh) * 100) })}</span><span class="g" title="${esc(this._t("kpi_so"))}">${r.est ? "≈ " : ""}${this._eur(r.gain)}</span></button>`
+          : `<div class="dli z"><i style="background:${r.color}"></i><span class="n">${esc(r.d.name)}</span><span class="v">${this._kwh(0)}</span><span class="s">—</span><span class="g">—</span></div>`;
         }).join("")}
         <div class="dfoot">
           <button class="dli prod ${pOff ? "off" : ""}" data-act="devtoggle" data-id="__prod" aria-pressed="${!pOff}"><i class="sunc"></i><span class="n">${this._t("c_prod")}</span></button>
@@ -1208,7 +1272,8 @@
     .stats { display: grid; grid-template-rows: repeat(3, 1fr); gap: 6px; }
     .stat { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 12px; background: var(--so-soft); }
     .stat ha-icon { --mdc-icon-size: 20px; flex: none; }
-    .stat.sun ha-icon { color: var(--so-sun); } .stat.home ha-icon { color: var(--so-house); } .stat.so ha-icon { color: var(--primary-color); }
+    .stat.sun ha-icon { color: var(--so-sun); } .stat.home ha-icon { color: var(--so-house); } .stat.so ha-icon { color: var(--primary-color); } .stat.bat ha-icon { color: var(--so-exp); } .stat.bat.chg ha-icon { color: var(--so-sun); }
+    .stats.n4 { grid-template-rows: repeat(4, 1fr); }
     .stat div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; flex: 1; min-width: 0; }
     .stat b { font-size: 15px; font-variant-numeric: tabular-nums; color: var(--primary-text-color); order: 2; white-space: nowrap; }
     .stat span { font-size: 13px; color: var(--secondary-text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1250,20 +1315,22 @@
     .dev.on .ic ha-icon, .dev.forced .ic ha-icon { color: var(--so-sun); }
     .dev.on .dot, .dev.forced .dot { background: var(--so-sun); animation: ping 1.8s ease-out infinite; }
     .dev.offpeak .ic { background: color-mix(in srgb, var(--so-hc) 25%, transparent); } .dev.offpeak .ic ha-icon { color: var(--so-hc); } .dev.offpeak .dot { background: var(--so-hc); }
-    .dev.idle .dot, .dev.wait .dot { background: var(--so-exp); }
+    .dev.idle .dot, .dev.wait .dot, .dev.max .dot { background: var(--so-exp); }
     .dev.warn .dot { background: var(--so-warn); }
     .dm { flex: 1; min-width: 0; }
     .dn { display: flex; align-items: baseline; gap: 8px; }
     .nm { font-weight: 600; font-size: 14.5px; color: var(--primary-text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .pw { font-size: 12px; font-weight: 700; color: var(--so-sun); white-space: nowrap; }
     .ds { font-size: 12.5px; color: var(--secondary-text-color); margin: 1px 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .dev.warn .ds { color: var(--so-warn); } .dev.forced .ds { color: var(--so-sun); font-weight: 600; }
+    .dev.warn .ds { color: var(--so-warn); } .dev.wait .ds { color: var(--so-hc); } .dev.forced .ds { color: var(--so-sun); font-weight: 600; }
     .gauge { position: relative; height: 6px; border-radius: 99px; background: color-mix(in srgb, var(--primary-text-color) 10%, transparent); }
     .gauge .fill { position: absolute; inset: 0 auto 0 0; border-radius: 99px; background: color-mix(in srgb, var(--so-sun) 80%, var(--so-exp)); transition: width .8s ease; }
     .gauge .fill.ok { background: var(--so-exp); }
     .gauge .mk { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; border-radius: 2px; background: var(--primary-text-color); opacity: .55; }
     .dt { display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px; color: var(--secondary-text-color); margin-top: 4px; font-variant-numeric: tabular-nums; }
     .dt b { color: var(--primary-text-color); }
+    .dt em { font-style: normal; } .dt em.ok { color: var(--so-exp); font-weight: 700; }
+    .dt .mki { display: inline-block; width: 2px; height: 10px; margin: 0 5px -1px 0; border-radius: 2px; background: var(--primary-text-color); opacity: .55; }
     .dt { flex-wrap: wrap; } .dt span { white-space: nowrap; }
     .da { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; }
     .prio.p4, .prio.p3 { border-color: color-mix(in srgb, var(--so-sun) 50%, transparent); }
@@ -1326,7 +1393,7 @@
     .nav button { border: 0; background: none; color: var(--primary-text-color); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: grid; place-items: center; }
     .nav button:disabled { opacity: .25; cursor: default; } .nav button:not(:disabled):hover { background: var(--so-soft); }
     .nav span { min-width: 96px; text-align: center; text-transform: capitalize; }
-    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr)); gap: 8px; }
+    .kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
     .kpi.imp { border-top-color: var(--so-house); }
     .src { font-size: 10.5px; color: var(--secondary-text-color); opacity: .75; text-align: right; margin-top: 4px; }
     .tabs { display: grid; gap: 4px; margin: 14px 16px 2px; padding: 4px; border-radius: 14px; background: var(--so-soft);
@@ -1346,7 +1413,7 @@
     .svg .l-sun.dash { stroke-dasharray: 5 4; }
     .svg .pmark { stroke: var(--so-sun); stroke-width: 2.5; stroke-dasharray: 4 3; }
     .dlist { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
-    .dli { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 76px; align-items: center; gap: 8px; font-size: 13px; color: var(--primary-text-color);
+    .dli { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto 76px 64px; align-items: center; gap: 8px; font-size: 13px; color: var(--primary-text-color);
            font: inherit; font-size: 13px; text-align: left; width: 100%; background: none; border: 0; padding: 4px 6px; margin: 0 -6px; border-radius: 8px; }
     button.dli { cursor: pointer; user-select: none; -webkit-user-select: none; transition: opacity .2s, background .2s; }
     button.dli:hover { background: var(--so-soft); }
@@ -1357,6 +1424,7 @@
     .dfoot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .lnk.all { font-size: 12px; }
     .legend .hint { opacity: .8; }
+    .dli .g { text-align: right; font-size: 12px; color: #a78bfa; font-variant-numeric: tabular-nums; white-space: nowrap; }
     .dli i { width: 10px; height: 10px; border-radius: 3px; }
     .dli .n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .dli .v { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -1364,7 +1432,7 @@
     .dli.z { opacity: .5; }
     .legend .est { font-style: italic; }
     .kpi { border-radius: 12px; padding: 9px 11px; background: var(--so-soft); display: flex; flex-direction: column; min-width: 0; border-top: 3px solid transparent; }
-    .kpi.sun { border-top-color: var(--so-sun); } .kpi.self { border-top-color: color-mix(in srgb, var(--so-sun) 60%, var(--so-exp)); } .kpi.exp { border-top-color: var(--so-exp); } .kpi.eur { border-top-color: var(--primary-color); }
+    .kpi.sun { border-top-color: var(--so-sun); } .kpi.self { border-top-color: color-mix(in srgb, var(--so-sun) 60%, var(--so-exp)); } .kpi.exp { border-top-color: var(--so-exp); } .kpi.eur { border-top-color: var(--primary-color); } .kpi.gain { border-top-color: #a78bfa; } .kpi.gain b { color: #a78bfa; }
     .kpi span { font-size: 11px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .kpi b { font-size: 18px; color: var(--primary-text-color); font-variant-numeric: tabular-nums; white-space: nowrap; }
     .kpi small { font-size: 11px; line-height: 1.3; color: var(--secondary-text-color); }
@@ -1407,11 +1475,11 @@
     @container (max-width: 520px) {
       .live { grid-template-columns: 1fr; }
       .stats { grid-template-rows: none; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .stats.n4 { grid-template-rows: none; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .stat { flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 10px; }
       .stat div { flex-direction: column; align-items: flex-start; gap: 0; }
       .stat b { order: 0; }
       .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .kpi.eur { grid-column: 1 / -1; }
       .det, .fm { padding-left: 12px; }
       .run { grid-template-columns: 90px 1fr 54px; gap: 8px; }
       .price { font-size: 11px; padding: 4px 8px; }
@@ -1445,7 +1513,7 @@
       if (!this.shadowRoot) this.attachShadow({ mode: "open" });
       const l = this._l;
       const labels = { title: "l_title", language: "l_language", show_live: "l_show_live", show_devices: "l_show_devices", show_history: "l_show_history",
-        history_mode: "l_history_mode", history_chart: "l_history_chart", default_tab: "l_default_tab", production_entity: "l_production", grid_entity: "l_grid", price_entity: "l_price", exclude: "l_exclude" };
+        history_mode: "l_history_mode", history_chart: "l_history_chart", default_tab: "l_default_tab", production_entity: "l_production", grid_entity: "l_grid", battery_entity: "l_battery", battery_power_entity: "l_battery_power", price_entity: "l_price", exclude: "l_exclude", offpeak_devices: "l_offpeak_devices" };
       this.shadowRoot.innerHTML = "";
       const f = document.createElement("ha-form");
       f.hass = this._hass;
@@ -1462,9 +1530,12 @@
           { name: "language", selector: { select: { mode: "dropdown", options: [{ value: "", label: tr(l, "auto_lang") }, ...Object.entries(LANG_NAMES).map(([value, label]) => ({ value, label }))] } } },
         ] },
         { name: "exclude", selector: { entity: { multiple: true, filter: { integration: DOMAIN, domain: "switch" } } } },
+        { name: "offpeak_devices", selector: { entity: { multiple: true, filter: { integration: DOMAIN, domain: "switch" } } } },
         { type: "expandable", name: "", title: tr(l, "l_sources"), schema: [
           { name: "production_entity", selector: { entity: { domain: "sensor", device_class: "power" } } },
           { name: "grid_entity", selector: { entity: { domain: "sensor", device_class: "power" } } },
+          { name: "battery_entity", selector: { entity: { domain: "sensor", device_class: "battery" } } },
+          { name: "battery_power_entity", selector: { entity: { domain: "sensor", device_class: "power" } } },
           { name: "price_entity", selector: { entity: { domain: ["sensor", "input_number", "number"] } } },
         ] },
       ];
@@ -1476,8 +1547,9 @@
         if (v.history_mode === "day") delete v.history_mode;
         if (!v.default_tab || v.default_tab === "none") delete v.default_tab;
         if (v.history_chart === "devices") delete v.history_chart;
-        for (const k of ["language", "production_entity", "grid_entity", "price_entity"]) if (!v[k]) delete v[k];
+        for (const k of ["language", "production_entity", "grid_entity", "battery_entity", "battery_power_entity", "price_entity"]) if (!v[k]) delete v[k];
         if (Array.isArray(v.exclude) && !v.exclude.length) delete v.exclude;
+        if (Array.isArray(v.offpeak_devices) && !v.offpeak_devices.length) delete v.offpeak_devices;
         const relang = (v.language || "") !== (this._c.language || "");
         this._c = v; this._last = JSON.stringify(v);
         this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: v }, bubbles: true, composed: true }));
