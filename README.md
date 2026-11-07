@@ -26,7 +26,11 @@ Solar Optimizer reste le moteur : la carte s'appuie uniquement sur ses entités,
 |---|---|
 | ![Carte HOLM Solar Optimizer](docs/images/carte.png) | ![Historique](docs/images/historique.png) |
 
-### 🆕 Nouveautés de la 1.4.2
+### 🆕 Nouveautés de la 1.4.3
+
+- 📖 **Gain Solar Optimizer expliqué** : nouvelle section « Le gain Solar Optimizer en détail » avec un exemple chiffré, et des textes d'aide dans l'éditeur visuel sous les options « Appareils qui auraient tourné en heures creuses », « Appareils masqués » et batterie.
+
+### Nouveautés de la 1.4.2
 
 - ⏸️ **Pause entre deux activations** : un appareil qui attend la fin de sa durée minimale entre deux activations affiche « Pause entre deux activations · disponible à 09:49 » au lieu de « Condition non remplie ». La carte distingue aussi le **maximum du jour atteint** et la **batterie sous le seuil** (merci à Jean-Marc Collin).
 - 🟣 **Gain Solar Optimizer** : une nouvelle tuile de l'historique chiffre ce que Solar Optimizer vous fait réellement gagner. La consommation de base de la maison profite du solaire en premier ; le solaire restant consommé par les appareils pilotés, qui sans Solar Optimizer aurait été revendu, est valorisé à (prix d'achat du moment − prix de revente). Le gain de chaque appareil s'affiche sous le graphique Appareils, et l'ancienne tuile devient « Économies solaires » (toute la production autoconsommée). Option `offpeak_devices` pour les appareils qui auraient tourné en heures creuses sans Solar Optimizer, comme un chauffe-eau : leur gain est calculé au prix des heures creuses, fourni par HOLM HP/HC. Idée de Jean-Marc Collin.
@@ -89,6 +93,27 @@ Si vous utilisez l'intégration [**HOLM HP/HC, Tarification et abonnement**](htt
 - **Marche des appareils** : une ligne par appareil, avec ses périodes de marche et sa durée totale. Une marche est en violet (heures creuses) quand elle démarre entre l'heure creuse réglée pour l'appareil dans Solar Optimizer et l'heure de remise à zéro, ou pendant les heures creuses de HOLM HP/HC.
 - **≈** : valeur estimée (puissance max × temps de marche), faute de capteur de puissance pour cet appareil.
 
+### Le gain Solar Optimizer en détail
+
+**Ce qu'il mesure.** L'argent que Solar Optimizer vous fait gagner en faisant consommer par vos appareils du solaire qui, sans lui, serait parti sur le réseau.
+
+**Comment il est calculé**, toutes les 5 minutes :
+1. **Consommation de base** = consommation de la maison − puissance des appareils pilotés. C'est ce que la maison aurait consommé de toute façon ; elle profite du solaire en premier.
+2. **Solaire restant** = production − consommation de base. Sans Solar Optimizer, il aurait été revendu.
+3. **Solaire capté** = la part de ce solaire restant réellement consommée par les appareils pilotés (partagée entre eux selon leur puissance).
+4. **Gain** = solaire capté × (prix d'achat − prix de revente).
+
+**Exemple** : à midi, les panneaux produisent 3 000 W, la maison consomme 800 W sans les appareils pilotés, et Solar Optimizer allume le chauffe-eau (2 000 W). Les 2 000 W du chauffe-eau viennent du solaire restant (3 000 − 800 = 2 200 W). Sur une heure, cela fait 2 kWh captés ; avec un achat à 0,21 € et une revente à 0,04 €, le gain vaut 2 × (0,21 − 0,04) = **0,34 €**.
+
+**Quel prix d'achat ?** Par défaut, **le prix du moment**, avec les heures pleines et creuses si vous utilisez [HOLM HP/HC](https://github.com/kaaribou/holm-tarif). C'est juste pour un appareil qui aurait tourné à ce moment-là de toute façon : VMC, déshumidificateur, spa, piscine. Mais un **chauffe-eau** aurait chauffé la nuit sans Solar Optimizer : le kWh solaire qu'il consomme à midi ne vous évite qu'un kWh payé au **prix des heures creuses**. Sélectionnez ces appareils dans l'option **Appareils qui auraient tourné en heures creuses** (`offpeak_devices`) : leur gain est calculé au prix HC. Dans l'exemple, avec des heures creuses à 0,16 €, le gain du chauffe-eau passe à 2 × (0,16 − 0,04) = **0,24 €**. Cette option nécessite HOLM HP/HC, qui fournit le prix des heures creuses ; sans lui, elle n'a pas d'effet.
+
+**Bon à savoir**
+- Un prix de revente élevé réduit le gain : moins l'écart entre achat et revente est grand, moins Solar Optimizer rapporte par kWh.
+- Les marches forcées ou de rattrapage la nuit, alimentées par le réseau, ne comptent pas : elles ne captent pas de solaire.
+- Un appareil sans capteur de puissance a une consommation estimée : son gain est marqué ≈.
+- Une batterie n'est pas prise en compte : sans Solar Optimizer, une partie du surplus l'aurait peut-être chargée au lieu d'être revendue.
+- **Économies solaires**, l'autre tuile, valorise toute la production consommée sur place, que Solar Optimizer y soit pour quelque chose ou non.
+
 ---
 
 ## Installation
@@ -102,7 +127,7 @@ Si vous utilisez l'intégration [**HOLM HP/HC, Tarification et abonnement**](htt
 ### Manuelle
 
 1. Copiez `holm-solar-optimizer-card.js` dans `config/www/community/holm-cards/`.
-2. Paramètres → Tableaux de bord → ⋮ → **Ressources** → ajoutez `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.4.2`, type **Module JavaScript**.
+2. Paramètres → Tableaux de bord → ⋮ → **Ressources** → ajoutez `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.4.3`, type **Module JavaScript**.
 3. Rechargez la page (Ctrl + F5).
 
 Prérequis : l'intégration [Solar Optimizer](https://github.com/jmcollin78/solar_optimizer) installée et configurée (version récente, avec les actions `solar_optimizer.start_device` et `stop_device`).
@@ -129,7 +154,7 @@ history_mode: day      # day (journée) ou week (7 jours)
 | `history_chart` | Graphique affiché à l'ouverture : `devices` ou `energy` | `devices` |
 | `power_sensors` | Capteur de puissance réel d'un appareil piloté, quand il n'est pas sur le même appareil (voir ci-dessous) | — |
 | `exclude` | Appareils à masquer (`switch.solar_optimizer_…`) | — |
-| `offpeak_devices` | Appareils qui auraient tourné en heures creuses sans Solar Optimizer (ex. chauffe-eau) : leur gain est calculé au prix HC de HOLM HP/HC | — |
+| `offpeak_devices` | Appareils qui auraient tourné en heures creuses sans Solar Optimizer (ex. chauffe-eau) : leur gain est calculé au prix HC de HOLM HP/HC (voir « Le gain Solar Optimizer en détail ») | — |
 | `production_entity` | Capteur de production solaire (W) | celui de Solar Optimizer |
 | `grid_entity` | Consommation nette (W, négative à la revente) | celle de Solar Optimizer |
 | `battery_entity` | État de charge de la batterie (%) | celui de Solar Optimizer |

@@ -26,7 +26,11 @@ Solar Optimizer stays the engine: the card only uses its entities, its actions a
 |---|---|
 | ![HOLM Solar Optimizer card](docs/images/carte.png) | ![History](docs/images/historique.png) |
 
-### 🆕 What's new in 1.4.2
+### 🆕 What's new in 1.4.3
+
+- 📖 **Solar Optimizer gain explained**: new “The Solar Optimizer gain in detail” section with a worked example, and help texts in the visual editor under the “Devices that would have run off-peak”, “Hidden devices” and battery options.
+
+### What's new in 1.4.2
 
 - ⏸️ **Pause between two activations**: a device waiting for its minimum delay between two activations shows “Pause between two activations · available at 09:49” instead of “Condition not met”. The card also tells apart the **daily maximum reached** and the **battery below threshold** (thanks to Jean-Marc Collin).
 - 🟣 **Solar Optimizer gain**: a new history tile shows what Solar Optimizer really earns you. The home base load gets the solar first; the remaining solar used by the managed devices, which would have been sold without Solar Optimizer, is valued at (current buy price − sell price). Each device's gain shows under the Devices chart, and the former tile becomes “Solar savings” (all the self-consumed production). `offpeak_devices` option for devices that would have run off-peak without Solar Optimizer, such as a water heater: their gain uses the off-peak price provided by HOLM HP/HC. Idea by Jean-Marc Collin.
@@ -89,6 +93,27 @@ If you use the [**HOLM HP/HC, Tarification et abonnement**](https://github.com/k
 - **Device runs**: one line per device, with its runs and total time. A run is purple (off-peak) when it starts between the device's off-peak time set in Solar Optimizer and the reset time, or during HOLM HP/HC off-peak hours.
 - **≈**: estimated value (max power × run time), as the device has no power sensor.
 
+### The Solar Optimizer gain in detail
+
+**What it measures.** The money Solar Optimizer earns you by having your devices use solar that, without it, would have gone to the grid.
+
+**How it is computed**, every 5 minutes:
+1. **Base load** = home consumption − power of the managed devices. That is what the home would have used anyway; it gets the solar first.
+2. **Remaining solar** = production − base load. Without Solar Optimizer, it would have been sold.
+3. **Captured solar** = the share of that remaining solar actually used by the managed devices (split between them by power).
+4. **Gain** = captured solar × (buy price − sell price).
+
+**Example**: at noon, the panels produce 3,000 W, the home uses 800 W without the managed devices, and Solar Optimizer switches the water heater on (2,000 W). The water heater's 2,000 W come from the remaining solar (3,000 − 800 = 2,200 W). Over one hour, that is 2 kWh captured; buying at €0.21 and selling at €0.04, the gain is 2 × (0.21 − 0.04) = **€0.34**.
+
+**Which buy price?** By default, **the current price**, with peak and off-peak hours if you use [HOLM HP/HC](https://github.com/kaaribou/holm-tarif). That is right for a device that would have run at that time anyway: ventilation, dehumidifier, spa, pool. But a **water heater** would have heated at night without Solar Optimizer: the solar kWh it uses at noon only saves you a kWh paid at the **off-peak price**. Select such devices in the **Devices that would have run off-peak** option (`offpeak_devices`): their gain uses the off-peak price. In the example, with off-peak at €0.16, the water heater's gain becomes 2 × (0.16 − 0.04) = **€0.24**. This option needs HOLM HP/HC, which provides the off-peak price; without it, it has no effect.
+
+**Good to know**
+- A high sell price lowers the gain: the smaller the gap between buying and selling, the less Solar Optimizer earns per kWh.
+- Forced runs or night catch-ups powered by the grid do not count: they capture no solar.
+- A device without a power sensor has an estimated consumption: its gain is marked ≈.
+- A battery is not taken into account: without Solar Optimizer, part of the surplus might have charged it instead of being sold.
+- **Solar savings**, the other tile, values all the production used on site, whether Solar Optimizer had a hand in it or not.
+
 ---
 
 ## Installation
@@ -102,7 +127,7 @@ If you use the [**HOLM HP/HC, Tarification et abonnement**](https://github.com/k
 ### Manual
 
 1. Copy `holm-solar-optimizer-card.js` to `config/www/community/holm-cards/`.
-2. Settings → Dashboards → ⋮ → **Resources** → add `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.4.2`, type **JavaScript module**.
+2. Settings → Dashboards → ⋮ → **Resources** → add `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.4.3`, type **JavaScript module**.
 3. Reload the page (Ctrl + F5).
 
 Requirement: the [Solar Optimizer](https://github.com/jmcollin78/solar_optimizer) integration installed and configured (a recent version, with the `solar_optimizer.start_device` and `stop_device` actions).
@@ -129,7 +154,7 @@ history_mode: day      # day or week (7 days)
 | `history_chart` | Chart shown first: `devices` or `energy` | `devices` |
 | `power_sensors` | Real power sensor of a managed device, when it is not on the same device (see below) | — |
 | `exclude` | Devices to hide (`switch.solar_optimizer_…`) | — |
-| `offpeak_devices` | Devices that would have run off-peak without Solar Optimizer (e.g. water heater): their gain uses the HOLM HP/HC off-peak price | — |
+| `offpeak_devices` | Devices that would have run off-peak without Solar Optimizer (e.g. water heater): their gain uses the HOLM HP/HC off-peak price (see “The Solar Optimizer gain in detail”) | — |
 | `production_entity` | Solar production sensor (W) | Solar Optimizer's |
 | `grid_entity` | Net consumption (W, negative when exporting) | Solar Optimizer's |
 | `battery_entity` | Battery state of charge (%) | Solar Optimizer's |

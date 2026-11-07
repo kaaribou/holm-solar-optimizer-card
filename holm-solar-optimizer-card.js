@@ -1,4 +1,4 @@
-/* holm-solar-optimizer-card — https://github.com/kaaribou/holm-solar-optimizer-card — licence MIT — v1.4.2 */
+/* holm-solar-optimizer-card — https://github.com/kaaribou/holm-solar-optimizer-card — licence MIT — v1.4.3 */
 // HOLM Solar Optimizer Card — une interface moderne pour Solar Optimizer (jmcollin78/solar_optimizer), qui reste le moteur.
 // Config (éditeur visuel disponible) :
 //   type: custom:holm-solar-optimizer-card
@@ -18,7 +18,7 @@
 //   price_entity: sensor.tarif_actuel  # facultatif : prix d'achat (HOLM HP/HC détecté automatiquement)
 //   exclude: [switch.solar_optimizer_xxx]
 (() => {
-  const VERSION = "1.4.2";
+  const VERSION = "1.4.3";
   const DOMAIN = "solar_optimizer";
 
   // ───────────────────────── traductions ─────────────────────────
@@ -47,7 +47,7 @@
       timeline: "Marche des appareils", solar: "Solaire", offpeak: "Heures creuses", total: "Total",
       loading: "Chargement…", error: "Erreur", no_devices: "Aucun appareil Solar Optimizer trouvé.", no_data: "Pas de données sur cette période",
       l_title: "Titre", l_language: "Langue", auto_lang: "Automatique (profil)", l_show_live: "Direct", l_show_devices: "Appareils", l_show_history: "Historique",
-      l_history_mode: "Historique à l'ouverture", l_sources: "Sources (facultatif)", l_production: "Production solaire (W)", battery: "Batterie", bat_chg: "en charge {a}", bat_dis: "en décharge {a}", l_battery: "Batterie : état de charge (%)", l_battery_power: "Batterie : puissance nette (W, positive en décharge)", l_grid: "Consommation nette (W, négative à la revente)",
+      l_history_mode: "Historique à l'ouverture", l_sources: "Sources (facultatif)", l_production: "Production solaire (W)", h_offpeak_devices: "Pour le Gain Solar Optimizer. Sélectionnez les appareils qui, sans Solar Optimizer, auraient fonctionné en heures creuses (ex. un chauffe-eau qui chauffe la nuit). Leur solaire capté est valorisé au prix des heures creuses (HOLM HP/HC) au lieu du prix du moment. Laissez vide si aucun.", h_exclude: "Ces appareils n'apparaissent ni dans la liste ni dans l'historique.", h_battery: "Facultatif : sinon celle déclarée dans Solar Optimizer. La tuile Batterie n'apparaît que si une batterie est connue.", h_battery_power: "Facultatif : positive quand la batterie se décharge, négative quand elle charge (convention de Solar Optimizer).", battery: "Batterie", bat_chg: "en charge {a}", bat_dis: "en décharge {a}", l_battery: "Batterie : état de charge (%)", l_battery_power: "Batterie : puissance nette (W, positive en décharge)", l_grid: "Consommation nette (W, négative à la revente)",
       l_price: "Prix d'achat (€/kWh)", l_exclude: "Appareils masqués",
       card_name: "HOLM – Solar Optimizer", card_desc: "Surplus en direct, appareils pilotés, historique et réglages de Solar Optimizer",
     },
@@ -75,7 +75,7 @@
       timeline: "Device runs", solar: "Solar", offpeak: "Off-peak", total: "Total",
       loading: "Loading…", error: "Error", no_devices: "No Solar Optimizer device found.", no_data: "No data for this period",
       l_title: "Title", l_language: "Language", auto_lang: "Automatic (profile)", l_show_live: "Live", l_show_devices: "Devices", l_show_history: "History",
-      l_history_mode: "History shown first", l_sources: "Sources (optional)", l_production: "Solar production (W)", battery: "Battery", bat_chg: "charging {a}", bat_dis: "discharging {a}", l_battery: "Battery: state of charge (%)", l_battery_power: "Battery: net power (W, positive when discharging)", l_grid: "Net consumption (W, negative when exporting)",
+      l_history_mode: "History shown first", l_sources: "Sources (optional)", l_production: "Solar production (W)", h_offpeak_devices: "For the Solar Optimizer gain. Select the devices that, without Solar Optimizer, would have run during off-peak hours (e.g. a water heater that heats at night). Their captured solar is valued at the off-peak price (HOLM HP/HC) instead of the current price. Leave empty if none.", h_exclude: "These devices appear neither in the list nor in the history.", h_battery: "Optional: otherwise the one set in Solar Optimizer. The Battery tile only shows when a battery is known.", h_battery_power: "Optional: positive when the battery discharges, negative when it charges (Solar Optimizer convention).", battery: "Battery", bat_chg: "charging {a}", bat_dis: "discharging {a}", l_battery: "Battery: state of charge (%)", l_battery_power: "Battery: net power (W, positive when discharging)", l_grid: "Net consumption (W, negative when exporting)",
       l_price: "Buy price (€/kWh)", l_exclude: "Hidden devices",
       card_name: "HOLM – Solar Optimizer", card_desc: "Live surplus, managed devices, history and settings for Solar Optimizer",
     },
@@ -103,7 +103,7 @@
       timeline: "Gerätelaufzeiten", solar: "Solar", offpeak: "Niedertarif", total: "Gesamt",
       loading: "Wird geladen…", error: "Fehler", no_devices: "Kein Solar-Optimizer-Gerät gefunden.", no_data: "Keine Daten in diesem Zeitraum",
       l_title: "Titel", l_language: "Sprache", auto_lang: "Automatisch (Profil)", l_show_live: "Live", l_show_devices: "Geräte", l_show_history: "Verlauf",
-      l_history_mode: "Verlauf beim Öffnen", l_sources: "Quellen (optional)", l_production: "Solarerzeugung (W)", battery: "Batterie", bat_chg: "lädt {a}", bat_dis: "entlädt {a}", l_battery: "Batterie: Ladezustand (%)", l_battery_power: "Batterie: Nettoleistung (W, positiv beim Entladen)", l_grid: "Nettoverbrauch (W, negativ bei Einspeisung)",
+      l_history_mode: "Verlauf beim Öffnen", l_sources: "Quellen (optional)", l_production: "Solarerzeugung (W)", h_offpeak_devices: "Für den Solar-Optimizer-Gewinn. Wählen Sie die Geräte, die ohne Solar Optimizer im Niedertarif gelaufen wären (z. B. ein Warmwasserspeicher, der nachts heizt). Ihr genutzter Solarstrom wird zum Niedertarifpreis (HOLM HP/HC) statt zum aktuellen Preis bewertet. Leer lassen, wenn keines.", h_exclude: "Diese Geräte erscheinen weder in der Liste noch im Verlauf.", h_battery: "Optional: sonst die in Solar Optimizer eingestellte. Die Batterie-Kachel erscheint nur, wenn eine Batterie bekannt ist.", h_battery_power: "Optional: positiv beim Entladen, negativ beim Laden (Konvention von Solar Optimizer).", battery: "Batterie", bat_chg: "lädt {a}", bat_dis: "entlädt {a}", l_battery: "Batterie: Ladezustand (%)", l_battery_power: "Batterie: Nettoleistung (W, positiv beim Entladen)", l_grid: "Nettoverbrauch (W, negativ bei Einspeisung)",
       l_price: "Bezugspreis (€/kWh)", l_exclude: "Ausgeblendete Geräte",
       card_name: "HOLM – Solar Optimizer", card_desc: "Live-Überschuss, gesteuerte Geräte, Verlauf und Einstellungen für Solar Optimizer",
     },
@@ -131,7 +131,7 @@
       timeline: "Funcionamiento de los dispositivos", solar: "Solar", offpeak: "Horas valle", total: "Total",
       loading: "Cargando…", error: "Error", no_devices: "No se ha encontrado ningún dispositivo de Solar Optimizer.", no_data: "Sin datos en este periodo",
       l_title: "Título", l_language: "Idioma", auto_lang: "Automático (perfil)", l_show_live: "En directo", l_show_devices: "Dispositivos", l_show_history: "Historial",
-      l_history_mode: "Historial al abrir", l_sources: "Fuentes (opcional)", l_production: "Producción solar (W)", battery: "Batería", bat_chg: "cargando {a}", bat_dis: "descargando {a}", l_battery: "Batería: estado de carga (%)", l_battery_power: "Batería: potencia neta (W, positiva al descargar)", l_grid: "Consumo neto (W, negativo al vender)",
+      l_history_mode: "Historial al abrir", l_sources: "Fuentes (opcional)", l_production: "Producción solar (W)", h_offpeak_devices: "Para la ganancia de Solar Optimizer. Seleccione los aparatos que, sin Solar Optimizer, habrían funcionado en horas valle (p. ej. un termo que calienta de noche). Su energía solar captada se valora al precio valle (HOLM HP/HC) en lugar del precio actual. Déjelo vacío si no hay ninguno.", h_exclude: "Estos aparatos no aparecen ni en la lista ni en el historial.", h_battery: "Opcional: si no, la declarada en Solar Optimizer. La tarjeta Batería solo aparece si se conoce una batería.", h_battery_power: "Opcional: positiva cuando la batería se descarga, negativa cuando carga (convención de Solar Optimizer).", battery: "Batería", bat_chg: "cargando {a}", bat_dis: "descargando {a}", l_battery: "Batería: estado de carga (%)", l_battery_power: "Batería: potencia neta (W, positiva al descargar)", l_grid: "Consumo neto (W, negativo al vender)",
       l_price: "Precio de compra (€/kWh)", l_exclude: "Dispositivos ocultos",
       card_name: "HOLM – Solar Optimizer", card_desc: "Excedente en directo, dispositivos gestionados, historial y ajustes de Solar Optimizer",
     },
@@ -159,7 +159,7 @@
       timeline: "Funzionamento dei dispositivi", solar: "Solare", offpeak: "Fuori punta", total: "Totale",
       loading: "Caricamento…", error: "Errore", no_devices: "Nessun dispositivo Solar Optimizer trovato.", no_data: "Nessun dato per questo periodo",
       l_title: "Titolo", l_language: "Lingua", auto_lang: "Automatica (profilo)", l_show_live: "In diretta", l_show_devices: "Dispositivi", l_show_history: "Cronologia",
-      l_history_mode: "Cronologia all'apertura", l_sources: "Fonti (facoltative)", l_production: "Produzione solare (W)", battery: "Batteria", bat_chg: "in carica {a}", bat_dis: "in scarica {a}", l_battery: "Batteria: stato di carica (%)", l_battery_power: "Batteria: potenza netta (W, positiva in scarica)", l_grid: "Consumo netto (W, negativo in immissione)",
+      l_history_mode: "Cronologia all'apertura", l_sources: "Fonti (facoltative)", l_production: "Produzione solare (W)", h_offpeak_devices: "Per il guadagno di Solar Optimizer. Selezionate i dispositivi che, senza Solar Optimizer, avrebbero funzionato in fascia ridotta (es. uno scaldabagno che scalda di notte). La loro energia solare catturata è valorizzata al prezzo ridotto (HOLM HP/HC) invece del prezzo attuale. Lasciate vuoto se nessuno.", h_exclude: "Questi dispositivi non compaiono né nell'elenco né nella cronologia.", h_battery: "Facoltativo: altrimenti quella impostata in Solar Optimizer. Il riquadro Batteria compare solo se è nota una batteria.", h_battery_power: "Facoltativo: positiva quando la batteria si scarica, negativa quando si carica (convenzione di Solar Optimizer).", battery: "Batteria", bat_chg: "in carica {a}", bat_dis: "in scarica {a}", l_battery: "Batteria: stato di carica (%)", l_battery_power: "Batteria: potenza netta (W, positiva in scarica)", l_grid: "Consumo netto (W, negativo in immissione)",
       l_price: "Prezzo di acquisto (€/kWh)", l_exclude: "Dispositivi nascosti",
       card_name: "HOLM – Solar Optimizer", card_desc: "Surplus in diretta, dispositivi gestiti, cronologia e impostazioni di Solar Optimizer",
     },
@@ -187,7 +187,7 @@
       timeline: "Werking van de apparaten", solar: "Zon", offpeak: "Daluren", total: "Totaal",
       loading: "Laden…", error: "Fout", no_devices: "Geen Solar Optimizer-apparaat gevonden.", no_data: "Geen gegevens voor deze periode",
       l_title: "Titel", l_language: "Taal", auto_lang: "Automatisch (profiel)", l_show_live: "Live", l_show_devices: "Apparaten", l_show_history: "Geschiedenis",
-      l_history_mode: "Geschiedenis bij openen", l_sources: "Bronnen (optioneel)", l_production: "Zonneproductie (W)", battery: "Batterij", bat_chg: "laadt {a}", bat_dis: "ontlaadt {a}", l_battery: "Batterij: laadtoestand (%)", l_battery_power: "Batterij: nettovermogen (W, positief bij ontladen)", l_grid: "Nettoverbruik (W, negatief bij teruglevering)",
+      l_history_mode: "Geschiedenis bij openen", l_sources: "Bronnen (optioneel)", l_production: "Zonneproductie (W)", h_offpeak_devices: "Voor de Solar Optimizer-winst. Kies de apparaten die zonder Solar Optimizer in het daltarief hadden gedraaid (bv. een boiler die 's nachts opwarmt). Hun benutte zonnestroom wordt gewaardeerd tegen de dalprijs (HOLM HP/HC) in plaats van de huidige prijs. Leeg laten als er geen zijn.", h_exclude: "Deze apparaten verschijnen niet in de lijst en niet in de geschiedenis.", h_battery: "Optioneel: anders die uit Solar Optimizer. De tegel Batterij verschijnt alleen als er een batterij bekend is.", h_battery_power: "Optioneel: positief bij ontladen, negatief bij laden (conventie van Solar Optimizer).", battery: "Batterij", bat_chg: "laadt {a}", bat_dis: "ontlaadt {a}", l_battery: "Batterij: laadtoestand (%)", l_battery_power: "Batterij: nettovermogen (W, positief bij ontladen)", l_grid: "Nettoverbruik (W, negatief bij teruglevering)",
       l_price: "Afnameprijs (€/kWh)", l_exclude: "Verborgen apparaten",
       card_name: "HOLM – Solar Optimizer", card_desc: "Live overschot, gestuurde apparaten, geschiedenis en instellingen van Solar Optimizer",
     },
@@ -215,7 +215,7 @@
       timeline: "Funcionamento dos dispositivos", solar: "Solar", offpeak: "Vazio", total: "Total",
       loading: "A carregar…", error: "Erro", no_devices: "Nenhum dispositivo Solar Optimizer encontrado.", no_data: "Sem dados neste período",
       l_title: "Título", l_language: "Idioma", auto_lang: "Automático (perfil)", l_show_live: "Em direto", l_show_devices: "Dispositivos", l_show_history: "Histórico",
-      l_history_mode: "Histórico ao abrir", l_sources: "Fontes (opcional)", l_production: "Produção solar (W)", battery: "Bateria", bat_chg: "a carregar {a}", bat_dis: "a descarregar {a}", l_battery: "Bateria: estado de carga (%)", l_battery_power: "Bateria: potência líquida (W, positiva ao descarregar)", l_grid: "Consumo líquido (W, negativo ao vender)",
+      l_history_mode: "Histórico ao abrir", l_sources: "Fontes (opcional)", l_production: "Produção solar (W)", h_offpeak_devices: "Para o ganho do Solar Optimizer. Selecione os aparelhos que, sem o Solar Optimizer, teriam funcionado em horas de vazio (ex. um termoacumulador que aquece à noite). A energia solar captada é valorizada ao preço de vazio (HOLM HP/HC) em vez do preço do momento. Deixe vazio se não houver.", h_exclude: "Estes aparelhos não aparecem nem na lista nem no histórico.", h_battery: "Opcional: caso contrário, a declarada no Solar Optimizer. O mosaico Bateria só aparece se uma bateria for conhecida.", h_battery_power: "Opcional: positiva quando a bateria descarrega, negativa quando carrega (convenção do Solar Optimizer).", battery: "Bateria", bat_chg: "a carregar {a}", bat_dis: "a descarregar {a}", l_battery: "Bateria: estado de carga (%)", l_battery_power: "Bateria: potência líquida (W, positiva ao descarregar)", l_grid: "Consumo líquido (W, negativo ao vender)",
       l_price: "Preço de compra (€/kWh)", l_exclude: "Dispositivos ocultos",
       card_name: "HOLM – Solar Optimizer", card_desc: "Excedente em direto, dispositivos geridos, histórico e definições do Solar Optimizer",
     },
@@ -243,7 +243,7 @@
       timeline: "Praca urządzeń", solar: "Słońce", offpeak: "Poza szczytem", total: "Razem",
       loading: "Ładowanie…", error: "Błąd", no_devices: "Nie znaleziono urządzeń Solar Optimizer.", no_data: "Brak danych w tym okresie",
       l_title: "Tytuł", l_language: "Język", auto_lang: "Automatycznie (profil)", l_show_live: "Na żywo", l_show_devices: "Urządzenia", l_show_history: "Historia",
-      l_history_mode: "Historia po otwarciu", l_sources: "Źródła (opcjonalnie)", l_production: "Produkcja solarna (W)", battery: "Bateria", bat_chg: "ładowanie {a}", bat_dis: "rozładowanie {a}", l_battery: "Bateria: stan naładowania (%)", l_battery_power: "Bateria: moc netto (W, dodatnia przy rozładowaniu)", l_grid: "Zużycie netto (W, ujemne przy oddawaniu)",
+      l_history_mode: "Historia po otwarciu", l_sources: "Źródła (opcjonalnie)", l_production: "Produkcja solarna (W)", h_offpeak_devices: "Dla zysku Solar Optimizer. Wybierz urządzenia, które bez Solar Optimizer działałyby w taryfie nocnej (np. bojler grzejący w nocy). Przechwycona przez nie energia słoneczna jest wyceniana po cenie nocnej (HOLM HP/HC) zamiast bieżącej. Zostaw puste, jeśli brak.", h_exclude: "Te urządzenia nie pojawiają się ani na liście, ani w historii.", h_battery: "Opcjonalnie: w przeciwnym razie ta z Solar Optimizer. Kafelek Bateria pojawia się tylko, gdy bateria jest znana.", h_battery_power: "Opcjonalnie: dodatnia przy rozładowaniu, ujemna przy ładowaniu (konwencja Solar Optimizer).", battery: "Bateria", bat_chg: "ładowanie {a}", bat_dis: "rozładowanie {a}", l_battery: "Bateria: stan naładowania (%)", l_battery_power: "Bateria: moc netto (W, dodatnia przy rozładowaniu)", l_grid: "Zużycie netto (W, ujemne przy oddawaniu)",
       l_price: "Cena zakupu (€/kWh)", l_exclude: "Ukryte urządzenia",
       card_name: "HOLM – Solar Optimizer", card_desc: "Nadwyżka na żywo, sterowane urządzenia, historia i ustawienia Solar Optimizer",
     },
@@ -1518,6 +1518,8 @@
       const f = document.createElement("ha-form");
       f.hass = this._hass;
       f.computeLabel = (s) => (labels[s.name] ? tr(l, labels[s.name]) : s.title || s.name);
+      const helps = { offpeak_devices: "h_offpeak_devices", exclude: "h_exclude", battery_entity: "h_battery", battery_power_entity: "h_battery_power" };
+      f.computeHelper = (s) => (helps[s.name] ? tr(l, helps[s.name]) : undefined);
       f.schema = [
         { name: "title", selector: { text: {} } },
         { type: "grid", name: "", schema: [
