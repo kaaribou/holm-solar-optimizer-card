@@ -25,7 +25,11 @@ Solar Optimizer reste le moteur : la carte s'appuie uniquement sur ses entités,
 |---|---|
 | ![Carte HOLM Solar Optimizer](docs/images/carte.png) | ![Historique](docs/images/historique.png) |
 
-### 🆕 Nouveautés de la 1.4.0
+### 🆕 Nouveautés de la 1.4.1
+
+- 🐛 **Compteurs d'énergie en Wh** : un compteur du tableau Énergie exprimé en Wh (ou en MWh) est maintenant converti en kWh. Avant, sa valeur était lue telle quelle, ce qui gonflait la production, l'autoconsommation et les économies (merci à Jean-Marc Collin).
+
+### Nouveautés de la 1.4.0
 
 - 👁️ **Choisir les appareils du graphique** : sous le graphique « Appareils », un clic sur un appareil le masque ou le réaffiche, un double-clic n'affiche que lui ; la production se masque aussi, pour que l'échelle s'adapte à un petit appareil. Bouton « Tout afficher » ; le choix est retenu par le navigateur.
 
@@ -58,7 +62,7 @@ Si vous utilisez l'intégration **HOLM HP/HC, Tarification et abonnement**, la c
 ### Manuelle
 
 1. Copiez `holm-solar-optimizer-card.js` dans `config/www/community/holm-cards/`.
-2. Paramètres → Tableaux de bord → ⋮ → **Ressources** → ajoutez `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.0.0`, type **Module JavaScript**.
+2. Paramètres → Tableaux de bord → ⋮ → **Ressources** → ajoutez `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.4.1`, type **Module JavaScript**.
 3. Rechargez la page (Ctrl + F5).
 
 Prérequis : l'intégration [Solar Optimizer](https://github.com/jmcollin78/solar_optimizer) installée et configurée (version récente, avec les actions `solar_optimizer.start_device` et `stop_device`).

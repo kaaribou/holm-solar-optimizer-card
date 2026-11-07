@@ -1,4 +1,4 @@
-/* holm-solar-optimizer-card — https://github.com/kaaribou/holm-solar-optimizer-card — licence MIT — v1.4.0 */
+/* holm-solar-optimizer-card — https://github.com/kaaribou/holm-solar-optimizer-card — licence MIT — v1.4.1 */
 // HOLM Solar Optimizer Card — une interface moderne pour Solar Optimizer (jmcollin78/solar_optimizer), qui reste le moteur.
 // Config (éditeur visuel disponible) :
 //   type: custom:holm-solar-optimizer-card
@@ -14,7 +14,7 @@
 //   price_entity: sensor.tarif_actuel  # facultatif : prix d'achat (HOLM HP/HC détecté automatiquement)
 //   exclude: [switch.solar_optimizer_xxx]
 (() => {
-  const VERSION = "1.4.0";
+  const VERSION = "1.4.1";
   const DOMAIN = "solar_optimizer";
 
   // ───────────────────────── traductions ─────────────────────────
@@ -839,7 +839,7 @@
           this._hass.callWS({ type: "history/history_during_period", start_time: a.toISOString(), end_time: b.toISOString(),
             entity_ids: [...devs.map((d) => d.id), ...(s.price ? [s.price] : []), ...priceIds], minimal_response: true, no_attributes: true, significant_changes_only: false }),
           eIds.length ? this._hass.callWS({ type: "recorder/statistics_during_period", start_time: a.toISOString(), end_time: b.toISOString(),
-            statistic_ids: eIds, period: "5minute", types: ["change"] }) : Promise.resolve(null),
+            statistic_ids: eIds, period: "5minute", types: ["change"], units: { energy: "kWh" } }) : Promise.resolve(null),
         ]);
         this._hist = this._compute(stats, hist, devs, a, b, end);
         if (prefs && estats) this._applyEnergy(this._hist, prefs, estats, hist);

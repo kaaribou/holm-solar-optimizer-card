@@ -25,7 +25,11 @@ Solar Optimizer stays the engine: the card only uses its entities, its actions a
 |---|---|
 | ![HOLM Solar Optimizer card](docs/images/carte.png) | ![History](docs/images/historique.png) |
 
-### 🆕 What's new in 1.4.0
+### 🆕 What's new in 1.4.1
+
+- 🐛 **Energy meters in Wh**: an Energy dashboard meter in Wh (or MWh) is now converted to kWh. Previously its value was read as is, which inflated production, self-consumption and savings (thanks to Jean-Marc Collin).
+
+### What's new in 1.4.0
 
 - 👁️ **Choose the devices on the chart**: under the “Devices” chart, a click on a device hides or shows it, a double-click shows only that one; production can be hidden too, so the scale fits a small device. “Show all” button; the choice is remembered by the browser.
 
@@ -58,7 +62,7 @@ If you use the **HOLM HP/HC, Tarification et abonnement** integration, the card 
 ### Manual
 
 1. Copy `holm-solar-optimizer-card.js` to `config/www/community/holm-cards/`.
-2. Settings → Dashboards → ⋮ → **Resources** → add `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.0.0`, type **JavaScript module**.
+2. Settings → Dashboards → ⋮ → **Resources** → add `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.4.1`, type **JavaScript module**.
 3. Reload the page (Ctrl + F5).
 
 Requirement: the [Solar Optimizer](https://github.com/jmcollin78/solar_optimizer) integration installed and configured (a recent version, with the `solar_optimizer.start_device` and `stop_device` actions).
