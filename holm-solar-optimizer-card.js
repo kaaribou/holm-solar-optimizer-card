@@ -18,7 +18,7 @@
 //   price_entity: sensor.tarif_actuel  # facultatif : prix d'achat (HOLM HP/HC détecté automatiquement)
 //   exclude: [switch.solar_optimizer_xxx]
 (() => {
-  const VERSION = "1.4.3";
+  const VERSION = "1.4.4";
   const DOMAIN = "solar_optimizer";
 
   // ───────────────────────── traductions ─────────────────────────
@@ -353,9 +353,18 @@
         const d = { id, key, s, name: s.attributes.device_name,
           enable: `switch.enable_solar_optimizer_${key}`, prio: `select.solar_optimizer_priority_${key}`, ontime: `sensor.on_time_today_solar_optimizer_${key}` };
         const sib = byDev[this._hass.entities?.[id]?.device_id];
+        let enFound = false;
         if (sib) for (const e of sib) {
           if (e === id) continue;
-          if (e.startsWith("switch.")) d.enable = e; else if (e.startsWith("select.")) d.prio = e; else if (e.startsWith("sensor.") && /on_time/.test(e)) d.ontime = e;
+          // Solar Optimizer 3.10 ajoute d'autres interrupteurs par appareil (respect_manual_changes…) :
+          // seul « enable » pilote l'appareil, on le reconnaît à son nom ou à sa clé de traduction.
+          const tk = this._hass.entities?.[e]?.translation_key;
+          if (e.startsWith("switch.")) {
+            if (tk === "enable" || /^switch\.enable_/.test(e)) { d.enable = e; enFound = true; }
+            else if (!enFound && !tk && !/respect_manual/.test(e) && !this._hass.states[d.enable]) d.enable = e; // entité renommée
+          }
+          else if (e.startsWith("select.")) { if (!tk || tk === "priority") d.prio = e; }
+          else if (e.startsWith("sensor.") && /on_time/.test(e)) d.ontime = e;
         }
         d.opts = this._opts?.[id]?.o;
         out.push(d);

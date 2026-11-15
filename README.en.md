@@ -26,7 +26,11 @@ Solar Optimizer stays the engine: the card only uses its entities, its actions a
 |---|---|
 | ![HOLM Solar Optimizer card](docs/images/carte.png) | ![History](docs/images/historique.png) |
 
-### 🆕 What's new in 1.4.3
+### 🆕 What's new in 1.4.4
+
+- 🐛 **"Automatic control" switches all off with Solar Optimizer 3.10** ([#1](https://github.com/kaaribou/holm-solar-optimizer-card/issues/1)): Solar Optimizer now adds a "Respect manual changes" switch to each device, and the card mistook it for the control switch. It now recognises the control switch (`switch.enable_…`) and ignores the others: the state shown is right and a click really turns control on or off.
+
+### What's new in 1.4.3
 
 - 📖 **Solar Optimizer gain explained**: new “The Solar Optimizer gain in detail” section with a worked example, and help texts in the visual editor under the “Devices that would have run off-peak”, “Hidden devices” and battery options.
 
@@ -127,7 +131,7 @@ If you use the [**HOLM HP/HC, Tarification et abonnement**](https://github.com/k
 ### Manual
 
 1. Copy `holm-solar-optimizer-card.js` to `config/www/community/holm-cards/`.
-2. Settings → Dashboards → ⋮ → **Resources** → add `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.4.3`, type **JavaScript module**.
+2. Settings → Dashboards → ⋮ → **Resources** → add `/local/community/holm-cards/holm-solar-optimizer-card.js?v=1.4.4`, type **JavaScript module**.
 3. Reload the page (Ctrl + F5).
 
 Requirement: the [Solar Optimizer](https://github.com/jmcollin78/solar_optimizer) integration installed and configured (a recent version, with the `solar_optimizer.start_device` and `stop_device` actions).
@@ -182,6 +186,8 @@ power_sensors:
 
 ## FAQ
 
+**All the "Automatic control" switches are off while Solar Optimizer is running devices.** Fixed in 1.4.4: Solar Optimizer 3.10 added a "Respect manual changes" switch per device, which earlier versions of the card mistook for the control switch. Update the card and reload the page (Ctrl + F5).
+
 **I can't see the Settings button.** It is reserved for Home Assistant administrators, like the configuration forms.
 
 **Grid import is slightly higher than on another card.** Cards that read hourly statistics leave out the current hour; the HOLM Solar Optimizer Card includes it.
@@ -194,6 +200,6 @@ power_sensors:
 
 Part of **HOLM — Home Orchestration & Living Management**: smart management and orchestration of the home.
 
-Other projects: [Volets HOLM](https://github.com/kaaribou/volets-holm) · [Climat HOLM](https://github.com/kaaribou/climat-holm) · [Carburant HOLM](https://github.com/kaaribou/carburant-holm) · [Commandes à la maison HOLM](https://github.com/kaaribou/commandes-holm) · [HOLM LaMetric](https://github.com/kaaribou/lametric-holm) · [HOLM My Menu](https://github.com/kaaribou/holm-mymenu) · [HOLM Lektrico](https://github.com/kaaribou/lektrico-holm) · [HOLM GitHub](https://github.com/kaaribou/github-holm) · [HOLM Navbar Card](https://github.com/kaaribou/holm-navbar-card) · [HOLM Climate Card](https://github.com/kaaribou/climate-card-holm) · [HOLM Music Card](https://github.com/kaaribou/holm-music-card) · [HOLM Sentinel Card](https://github.com/kaaribou/holm-sentinel-card) · [HOLM Security Card](https://github.com/kaaribou/holm-security-card) · [HOLM Recordings Card](https://github.com/kaaribou/holm-recordings-card) · [HOLM Covers Card](https://github.com/kaaribou/holm-covers-card) · [HOLM Runtime Card](https://github.com/kaaribou/holm-runtime-card) · [HOLM Power Flow Card](https://github.com/kaaribou/holm-power-flow-card) · [HOLM Energy Cards](https://github.com/kaaribou/holm-energy-cards) · [HOLM Radiator Card](https://github.com/kaaribou/holm-radiator-card) · [HOLM Floor Card](https://github.com/kaaribou/holm-floor-card) · [HOLM Ecojoko Card](https://github.com/kaaribou/holm-ecojoko-card) · [HOLM Smoke Card](https://github.com/kaaribou/holm-smoke-card) · [HOLM BG Card](https://github.com/kaaribou/holm-bg-card).
+Other projects: [Volets HOLM](https://github.com/kaaribou/volets-holm) · [Climat HOLM](https://github.com/kaaribou/climat-holm) · [Carburant HOLM](https://github.com/kaaribou/carburant-holm) · [Commandes à la maison HOLM](https://github.com/kaaribou/commandes-holm) · [HOLM LaMetric](https://github.com/kaaribou/lametric-holm) · [HOLM My Menu](https://github.com/kaaribou/holm-mymenu) · [HOLM Lektrico](https://github.com/kaaribou/lektrico-holm) · [HOLM GitHub](https://github.com/kaaribou/github-holm) · [HOLM Navbar Card](https://github.com/kaaribou/holm-navbar-card) · [HOLM Climate Card](https://github.com/kaaribou/climate-card-holm) · [HOLM Music Card](https://github.com/kaaribou/holm-music-card) · [HOLM Sentinel Card](https://github.com/kaaribou/holm-sentinel-card) · [HOLM Security Card](https://github.com/kaaribou/holm-security-card) · [HOLM Recordings Card](https://github.com/kaaribou/holm-recordings-card) · [HOLM Covers Card](https://github.com/kaaribou/holm-covers-card) · [HOLM Runtime Card](https://github.com/kaaribou/holm-runtime-card) · [HOLM Power Flow Card](https://github.com/kaaribou/holm-power-flow-card) · [HOLM Energy Cards](https://github.com/kaaribou/holm-energy-cards) · [HOLM Radiator Card](https://github.com/kaaribou/holm-radiator-card) · [HOLM Floor Card](https://github.com/kaaribou/holm-floor-card) · [HOLM Ecojoko Card](https://github.com/kaaribou/holm-ecojoko-card) · [HOLM Smoke Card](https://github.com/kaaribou/holm-smoke-card) · [HOLM BG Card](https://github.com/kaaribou/holm-bg-card) · [HOLM Bins](https://github.com/kaaribou/holm-bins) · [HOLM FX](https://github.com/kaaribou/holm-fx-card)
 
 MIT licence · Not affiliated with Solar Optimizer. · [☕ Buy me a beer](https://paypal.me/kaaribou)
